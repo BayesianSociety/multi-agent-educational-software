@@ -1,0 +1,515 @@
+CONTEXT / SPECIFICATION (read fully before responding)
+I’m going to paste a long document.
+Please read it fully and confirm when you’re done.
+Do not analyze or respond until I say so.
+
+## Version 3.1 — Hardened Integrated Prompt with Explicit Design A vs Design B Sections
+## (Repo-resident orchestrator state; deterministic gating; deterministic variant selection)
+## (Minimal modularity patch: optional locked PROJECT_BRIEF.yaml; hardened `.git` checks; deterministic revert incl untracked; JSONL logging clarification; optional safer test command mode)
+
+## What this gives you
+#### A single spec where every requirement is labeled as either [Design A] (core) or [Design B] (extension).
+#### Design A stays “orchestrator-only learning”: deterministic policy + deterministic prompt variant selection, but no Codex self-editing of a prompt library.
+### Design B adds the eval-gated prompt/skill self-improvement loop with strict allowlists and deterministic acceptance.
+
+This specification is split into:
+- [Design A] Core workflow + orchestrator-only learning. (Required in both A and B.)
+- [Design B] Adds an eval-gated loop where Codex may improve a prompt/skill library. (Optional extension; only in B.)
+
+If running Design B, ALL Design A requirements still apply unless explicitly overridden.
+
+----------------------------------------------------------------------
+[PROJECT LAYERS] Add project specificity using FOUR layers (0–3). These are markings only; do not change the workflow.
+- [Layer 0 — Non-negotiables]: target platform, age range, safety/privacy stance, accessibility baseline.
+- [Layer 1 — MVP + Core learning loop]: core gameplay loop, learning objectives, MVP scope, non-goals.
+- [Layer 2 — Architecture constraints]: frontend-only vs backend, level format, persistence, execution model, test commands/CI.
+- [Layer 3 — Content & UX specifics]: block palette UX, snap/connect rules, tutorial flow, level design rules/examples, visuals.
+
+[Non-game interpretation note — modularity]
+- For non-game programs, interpret:
+  - “gameplay loop” as “core user workflow”
+  - “levels” as “scenarios / tasks / flows”
+  - “level format” as “domain content format / data format”
+
+[Layer placement rule of thumb]
+- Layer 0–2 MUST be specified up front (Step 0 and Step 1 artifacts + validators).
+- Layer 3 can evolve iteratively (mostly /design/** and content), but should still have minimal deterministic structure checks.
+
+----------------------------------------------------------------------
+[Design A] Prerequisites (hard requirements)  [Layer N/A]
+- Codex CLI is installed and authenticated.
+- Run inside a Git repository.
+- Python 3.11+ available.
+- OS supports subprocess execution.
+
+[Design A] Compatibility note (no pretending)  [Layer N/A]
+- This workflow may reference optional Codex flags such as:
+  - --experimental-json (JSONL event stream)
+  - --output-schema (schema-constrained output)
+- The orchestrator MUST implement feature detection:
+  - deterministically invoke `codex exec --help` and check for flag presence (string match)
+  - if unsupported, proceed without them and record that they were unavailable
+- Regardless of flag support, gating/learning MUST use filesystem + validators + exit codes only.
+
+----------------------------------------------------------------------
+[Design A] Goal  [Layer N/A]
+Build a Codex-only, multi-run “multi-agent” software creation workflow driven by a single Python script.
+
+[Design A] Hard constraints  [Layer N/A]
+- The Python orchestrator must NOT call the OpenAI API and must NOT use any Codex SDK.
+- The orchestrator MUST orchestrate multiple `codex exec` subprocess runs with different role prompts (“agents”).
+- Codex does the actual file writing inside the repo; Python controls progression via gating + validation.
+- Decision-making MUST NOT depend on natural-language interpretation of Codex output.
+
+----------------------------------------------------------------------
+[Design A] Required project outputs (Codex-authored)  [Layer N/A]
+Codex MUST create/update these exact paths (case-sensitive):
+- REQUIREMENTS.md
+- TEST.md
+- AGENT_TASKS.md
+- directories: /design, /frontend, /backend, /tests
+
+[Design B] Additional required outputs (Codex-authored)  [Layer N/A]
+Codex MUST additionally create/update:
+- AGENTS.md (repo-root; stabilized after bootstrap)
+- directories:
+  - /prompts              (prompt templates/variants; editable ONLY by Prompt Library Bootstrap or Prompt Tuner)
+  - /.codex/skills        (skill library; editable ONLY by Prompt Library Bootstrap or Prompt Tuner)
+
+[PROJECT-SPECIFIC ARTIFACT (recommended; do not remove existing requirements)]  [Layer 0, Layer 1, selected Layer 2]
+- Add a locked project brief file (name is a project decision; recommended: PROJECT_BRIEF.md).
+- This file is the single source of truth for Layer 0–2 constraints and MUST be referenced by all specialists.
+- After Step 0 completes, the project brief becomes LOCKED (no specialist may modify it).
+- Deterministic validators MUST enforce its existence and required sections/keywords (details live in “Deterministic validators”).
+
+[MINIMAL MODULARITY ADD-ON (recommended)]
+- Add a locked project brief config file (recommended: PROJECT_BRIEF.yaml).
+- Purpose: a machine-readable “project pack knob” so you can swap project types (game/finance/research) WITHOUT changing this core spec.
+- PROJECT_BRIEF.yaml SHOULD define only deterministic knobs such as:
+  - project_type (e.g., "scratch_like_game", "financial_app", "research_tool")
+  - optional test execution policy override (see “Test command extraction”)
+  - optional extra deterministic validator toggles (strings/regex/headings/existence checks)
+- IMPORTANT for stdlib-only: if used, PROJECT_BRIEF.yaml MUST be valid JSON (YAML 1.2 JSON subset) so the orchestrator can parse it using Python stdlib `json`.
+- After Step 0 completes, PROJECT_BRIEF.yaml becomes LOCKED (no specialist may modify it).
+- Deterministic validators MUST enforce its existence and required keys if used.
+
+----------------------------------------------------------------------
+[Design A] Orchestrator private state (Python-authored only; in-repo; NOT product deliverables)  [Layer N/A]
+- The Python orchestrator MAY create and maintain: /.orchestrator/
+  - /.orchestrator/policy.json
+  - /.orchestrator/runs/<run_id>/**   (immutable run logs: manifests, diffs, validator reports)
+  - /.orchestrator/evals/<run_id>.json (optional in A; required in B)
+  - /.orchestrator/cache/** (optional)
+- Codex MUST NEVER modify anything under /.orchestrator/** (hard invariant).
+
+[Design A] Non-negotiable invariants (hard-fail if violated)  [Layer N/A]
+1) Codex may not modify /.orchestrator/** at any time.
+2) Codex may not modify .git/** at any time.
+3) Each step must only modify allowlisted paths for that step.
+4) If allowlist violation occurs: step fails and changes are reverted deterministically.
+5) A step may be marked successful only if all validators for that step pass.
+6) Retries are bounded: max_attempts_per_step = 3 (1 initial + up to 2 retries). No infinite loops.
+
+[Design B] Additional invariants  [Layer N/A]
+7) Prompt Library Bootstrap / Prompt Tuner may ONLY modify /prompts/** and /.codex/skills/** (and nothing else).
+8) After bootstrap, AGENTS.md is LOCKED:
+   - no specialist may modify AGENTS.md
+   - Prompt Tuner may not modify AGENTS.md
+
+[PROJECT BRIEF LOCKING INVARIANT (if used)]  [Layer 0–2]
+9) After Step 0 completes, the project brief file (e.g., PROJECT_BRIEF.md) is LOCKED:
+   - no specialist step may modify it
+   - Prompt Tuner may not modify it
+   - any modification is a hard-fail + revert
+
+[PROJECT BRIEF CONFIG LOCKING INVARIANT (if used)]  [Layer N/A]
+10) After Step 0 completes, the project brief config file (e.g., PROJECT_BRIEF.yaml) is LOCKED:
+   - no specialist step may modify it
+   - Prompt Tuner may not modify it
+   - any modification is a hard-fail + revert
+
+----------------------------------------------------------------------
+[Design A] Boundary Enforcement (do NOT skip; closes the trust gap)  [Layer N/A]
+The orchestrator MUST NOT “ignore diffs under /.orchestrator/**”.
+
+Instead it MUST enforce “Codex run windows”:
+
+- Before launching codex exec:
+  - capture PRE snapshot hashes for:
+    - all tracked repo files AND all files under /.orchestrator/** (minimum)
+  - capture PRE file listing for untracked files (to enable deterministic cleanup on revert)
+  - [`.git/**` integrity pre-checks; required for invariant #2]
+    - record PRE `git rev-parse HEAD`
+    - record PRE `git diff --cached --name-only` (must be empty at run start; else hard-fail)
+    - (optional extra) record hash/mtime of `.git/index`
+  - (optional extra) chmod /.orchestrator/** to read-only on POSIX
+  - (optional extra) chmod .git/** to read-only on POSIX
+- Run codex exec.
+- Immediately after codex returns (BEFORE orchestrator writes any logs/policy):
+  - capture POST snapshot hashes
+  - capture POST file listing for untracked files
+  - compute changed paths
+  - enforce forbidden paths + allowlists + caps
+  - [`.git/**` integrity post-checks; required for invariant #2]
+    - `git rev-parse HEAD` must be unchanged
+    - `git diff --cached --name-only` must be empty
+    - (optional) `.git/index` must match PRE record
+
+- Only AFTER gating/reverts are complete may the orchestrator write under /.orchestrator/**.
+- If /.orchestrator/** changed during a Codex run window: hard-fail and revert.
+
+[Allowlist enforcement must be path-safe]
+- Orchestrator MUST normalize paths before checking allowlists:
+  - reject any path containing `..` segments after normalization
+  - treat symlinks conservatively:
+    - either forbid creating symlinks, OR
+    - resolve realpaths and hard-fail if a path escapes repo root
+- This prevents allowlist bypass via traversal/symlink tricks.
+
+[Deterministic revert must include untracked files]
+- Reverting MUST restore tracked files (e.g., `git restore` / `git checkout --`).
+- Reverting MUST also delete unauthorized NEW files/dirs that were created (untracked) during the Codex run window:
+  - compare PRE vs POST file listings
+  - deterministically remove new unauthorized paths after allowlist violation or invariant fail
+
+----------------------------------------------------------------------
+[Design A] Agent model  [Layer N/A]
+1) Orchestrator / Project Manager (Python)
+- Break work into steps, run specialists, enforce gating, manage retries.
+- Maintain deterministic learning state in /.orchestrator/policy.json.
+
+2) Specialists (each is one `codex exec` run)
+Suggested roles:
+- Requirements Analyst
+- UX / Designer
+- Frontend Dev
+- Backend Dev
+- QA Tester
+- Docs Writer
+- Security Reviewer (optional)
+- Release Engineer (recommended)
+
+[Design B] Additional specialist  [Layer N/A]
+- Prompt Tuner (Design B only; may edit ONLY /prompts/** and /.codex/skills/**; accepted only if deterministic score improves)
+
+----------------------------------------------------------------------
+[Design A] Default pipeline order  [Layer-to-step mapping shown inline]
+0) Release Engineer (bootstrap repo structure and run instructions)  [Layer 0 + Layer 1 + minimal Layer 2: establish project brief; lock it]
+1) Requirements Analyst  [Layer 1: translate brief into requirements + acceptance criteria]
+2) UX / Designer  [Layer 3: block UX + level/design assets; must conform to Layer 0–2 brief]
+3) Frontend Dev  [Layer 2 implementation + Layer 3 UI mechanics; must conform to Layer 0–2 brief]
+4) Backend Dev  [Layer 2: ONLY if architecture constraints require it; otherwise keep minimal placeholder]
+5) QA Tester  [Layer 2: deterministic tests + test command wiring; validates Layer 1 acceptance criteria]
+6) Docs Writer  [Layer 1/2 documentation coherence; must not alter locked brief]
+
+[Design B] Additional steps (as needed)  [Layer N/A (meta workflow only)]
+- Prompt Library Bootstrap (only if /prompts/** or /.codex/skills/** missing/empty)
+- Prompt Tuner loop (optional, eval-gated)
+
+Parallelization:
+- [Design A] Allowed ONLY if specialists write to provably disjoint allowlisted paths and enforcement remains deterministic.
+- Default: sequential.
+
+----------------------------------------------------------------------
+[Design A] Codex invocation protocol  [Layer N/A]
+- Launch `codex exec` as a subprocess.
+- Provide the prompt via stdin using '-' (read prompt from stdin).
+- Capture stdout + stderr.
+- If supported, `--experimental-json` MAY be enabled for diagnostics only.
+- The orchestrator MAY store JSONL event streams under /.orchestrator/runs/** for debugging.
+  - During the Codex run window, the orchestrator MUST capture JSONL/stdout/stderr to memory or a temp location OUTSIDE the repo root.
+  - Only AFTER gating/reverts may it write those logs into /.orchestrator/runs/**.
+- The orchestrator MUST NOT use natural-language output (stdout/stderr text or event text) for gating or learning.
+  Allowed gating/learning inputs ONLY:
+  - validator pass/fail + error codes
+  - exit codes
+  - filesystem diffs (changed paths)
+  - hashes/manifests
+  - retry counts
+
+[PROJECT LAYER INJECTION RULE (must be applied by orchestrator prompts)]  [Layer 0–2]
+- Every specialist prompt MUST include (verbatim or deterministically extracted):
+  - the project brief (Layer 0–2) content OR a deterministic excerpt of it
+  - explicit instruction: do not contradict the brief
+- If PROJECT_BRIEF.yaml is used, specialist prompts SHOULD also include its `project_type` value verbatim.
+- Gating MUST NOT rely on whether Codex “claimed” compliance; only validators/diffs.
+
+----------------------------------------------------------------------
+[Design A] Filesystem allowlists and forbidden paths  [Layer N/A]
+Global forbidden paths for Codex (hard-fail if touched):
+- /.orchestrator/**
+- /.git/**
+
+[Design B] Global restricted paths (allowed ONLY for special steps)  [Layer N/A]
+- /prompts/** and /.codex/skills/** (ONLY Prompt Library Bootstrap / Prompt Tuner)
+- AGENTS.md (ONLY Release Engineer step, then locked)
+
+Each step must have a per-step allowlist.
+Example minimal allowlists (adapt as needed):
+- Release Engineer: REQUIREMENTS.md, TEST.md, AGENT_TASKS.md, docker-compose.yml, .env.example, .gitignore, /design/**, /frontend/**, /backend/**, /tests/**
+  - [Design B] plus: AGENTS.md (ONLY in this step)
+  - [Layer 0–2] plus: project brief file (e.g., PROJECT_BRIEF.md) (ONLY in this step, then locked)
+  - [Modularity] plus: project brief config file (e.g., PROJECT_BRIEF.yaml) (ONLY in this step, then locked)
+- Requirements: REQUIREMENTS.md, AGENT_TASKS.md  [Layer 1]
+- Designer: /design/**, REQUIREMENTS.md (optional)  [Layer 3]
+- Frontend: /frontend/**, /tests/**, TEST.md (optional)  [Layer 2 + Layer 3]
+- Backend: /backend/**, /tests/**, TEST.md (optional), .env.example (optional), docker-compose.yml (optional)  [Layer 2]
+- QA: /tests/**, TEST.md  [Layer 2]
+- Docs: REQUIREMENTS.md, TEST.md, AGENT_TASKS.md  [Layer 1/2]
+
+[Design A] Change limits (deterministic safety)  [Layer N/A]
+Default per-step caps:
+- max_changed_files = 60
+- max_total_bytes_changed = 500_000
+- max_deleted_files = 0 (unless explicitly allowed for that step)
+If caps exceeded: fail, revert, retry with a stricter constraint patch.
+
+----------------------------------------------------------------------
+[Design A] Deterministic validators (minimum viable, explicit)  [Layer N/A baseline + layer-specific additions]
+Existence + structure:
+- Required files exist: REQUIREMENTS.md, TEST.md, AGENT_TASKS.md
+- Required directories exist: /design, /frontend, /backend, /tests
+
+[Layer 2] Infrastructure file validators (if DB/backend is required by PROJECT_BRIEF.md or PROJECT_BRIEF.yaml)
+- If the project requires Docker Compose:
+  - docker-compose.yml MUST exist at repo root.
+  - .env.example MUST exist at repo root.
+  - .gitignore MUST include ".env" (string match) to prevent accidental secret commits.
+
+[Design B] Additional existence:
+- AGENTS.md exists
+- /prompts exists
+- /.codex/skills exists
+
+[Layer 0–2] Project brief existence + lock validators (if used):
+- The project brief file exists (e.g., PROJECT_BRIEF.md).
+- After Step 0, project brief is LOCKED:
+  - any modification outside Step 0 is a hard-fail + revert.
+- Deterministic content requirements for the project brief MUST be enforced by validators:
+  - required headings/sections for Layer 0–2
+  - required keywords for product identity (minimal; avoid overfitting)
+
+[Project brief config existence + lock validators (if used)]  [Layer N/A]
+- The project brief config file exists (e.g., PROJECT_BRIEF.yaml).
+- After Step 0, project brief config is LOCKED:
+  - any modification outside Step 0 is a hard-fail + revert.
+- If present, PROJECT_BRIEF.yaml MUST be valid JSON and MUST contain at least:
+  - "project_type" (string)
+- Orchestrator must fail deterministically with a specific error code (e.g., BRIEF_YAML_INVALID) if parsing fails or required key missing.
+
+Content validators (deterministic string/regex checks):
+REQUIREMENTS.md must contain headings:  [Layer 1]
+- "# Overview"
+- "# Scope"
+- "# Non-Goals"
+- "# Acceptance Criteria"
+- "# Risks"
+
+TEST.md must contain:  [Layer 2]
+- "# How to run tests"
+- a fenced code block with at least ONE command
+- "# Environments"
+
+AGENT_TASKS.md must contain:  [Layer N/A but must reference project brief]
+- "# Agent Tasks"
+- sections for Requirements, Designer, Frontend, Backend, QA (at minimum)
+- at least 2 bullet tasks per section
+- [Layer 0–2] tasks should reference the project brief constraints (deterministically check presence of a “Project Brief” reference line)
+
+[Design B] AGENTS.md content must contain:  [Layer N/A]
+- "# Global Rules"
+- "# File Boundaries"
+- "# How to Run Tests"
+- explicit rule: "Do not modify /.orchestrator/**"
+- After Release Engineer step completes, AGENTS.md becomes LOCKED.
+
+Test command extraction (deterministic):  [Layer 2]
+[DEFAULT MODE — original behavior]
+- Take the FIRST fenced code block under "# How to run tests" in TEST.md
+- Execute commands line-by-line (skip blanks and lines starting with "#")
+- If extraction fails: validator fails with error code TEST_CMD_MISSING
+- Tests pass only if exit code == 0
+
+[OPTIONAL MODE — safer if PROJECT_BRIEF.yaml requests it]
+- If PROJECT_BRIEF.yaml contains:
+  - "tests": { "command_source": "profile", "commands": [...] }
+  then:
+  - execute ONLY those commands in the given order
+  - and validate TEST.md documents those same commands (deterministic string check)
+- If PROJECT_BRIEF.yaml is absent or does not request it, use DEFAULT MODE.
+
+----------------------------------------------------------------------
+[Design A] Orchestrator-only learning (persistent; deterministic)  [Layer N/A]
+- Maintain /.orchestrator/policy.json with:
+  - per-step + per-variant stats: attempts, passes, clean_passes, failures by error_code
+  - per-error constraint patches (bounded; max 8 lines per step)
+  - per-step limits overrides (may only tighten safety, never loosen)
+  - variant selection configuration (see below)
+- Policy updates MUST be deterministic functions of:
+  - validator error codes
+  - allowlist violations
+  - exit codes
+  - diff stats (file counts, byte deltas)
+  - retry counts
+- MUST NOT use natural-language interpretation of Codex outputs.
+
+----------------------------------------------------------------------
+[Design A] Prompt variant source and selection (deterministic; replaces epsilon-greedy)  [Layer N/A]
+Design intent:
+- Use multiple prompt variants per agent to improve reliability over time.
+- Selection must be fully deterministic (no RNG).
+
+Variant source:
+- [Design A] The orchestrator MUST support storing prompt variants as:
+  - embedded templates inside orchestrator.py, OR
+  - Python-owned files under /.orchestrator/prompt_templates/<agent>/**
+  Codex must never modify /.orchestrator/**.
+- [Design B] If /prompts/<agent>/** exists, the orchestrator MUST load variants from /prompts/<agent>/** instead of internal templates.
+
+Deterministic prompt epoching (prevents stale stats)
+- Compute prompt_epoch_id as a SHA-256 over the loaded variant contents:
+  - [Design A] hash the resolved templates actually used (embedded or /.orchestrator/prompt_templates)
+  - [Design B] additionally include hashes of /.codex/skills/** that are loaded/used
+- Track stats per (agent_role, prompt_epoch_id).
+- If prompt_epoch_id changes, selection resets to BOOTSTRAP (round-robin) for that role+epoch.
+
+Variant list order:
+- Sort deterministically by relative path (or stable internal name) lexicographically.
+
+Selection is a deterministic 2-phase procedure per (agent_role, prompt_epoch_id):
+
+Definitions:
+- attempts[v] = number of times variant v has been used
+- pass[v] = step validators passed (1/0)
+- clean_pass[v] = validators passed AND retries_used == 0 AND fixer_runs == 0 (1/0)
+- mean_clean[v] = clean_pass[v] / max(1, attempts[v])
+- total_attempts = sum(attempts[v]) over active variants
+
+Phase 1: BOOTSTRAP (deterministic round-robin)
+- bootstrap_min_trials_per_variant = 3 (default; configurable in policy.json)
+- BOOTSTRAP completes only when every active variant has attempts[v] >= bootstrap_min_trials_per_variant.
+- While BOOTSTRAP:
+  - choose next variant in round-robin order:
+    - rr_index = (last_rr_index + 1) mod len(active_variants_sorted)
+  - update last_rr_index deterministically in policy.json
+
+Phase 2: AFTER BOOTSTRAP (choose exactly ONE deterministic strategy)
+- The orchestrator MUST support all strategies below.
+- Configure in policy.json:
+  selection_strategy in {"ucb1", "explore_then_commit", "rr_elimination"}
+- Default selection_strategy = "ucb1"
+
+Strategy A: deterministic UCB1 (ucb1)
+- ucb_c = 1.0 (configurable)
+- ucb_score[v] = mean_clean[v] + ucb_c * sqrt( ln(max(1, total_attempts)) / max(1, attempts[v]) )
+- Choose max ucb_score[v].
+- Tie-break: lexicographically smallest variant id.
+
+Strategy B: explore-then-commit (explore_then_commit)
+- After BOOTSTRAP:
+  - best = argmax_v(mean_clean[v]) with lexicographic tie-break
+- Commit for commit_window_runs = 10 (configurable) selections to best.
+- Deterministic re-explore triggers:
+  - consecutive_not_clean_best increments if NOT clean (fail OR retries_used>0 OR fixer_runs>0)
+  - if consecutive_not_clean_best >= 2 OR mean_clean[best] < 0.3 after >= 10 attempts:
+    - exit commit mode and re-enter BOOTSTRAP for that role+epoch (keep stats)
+
+Strategy C: round-robin with elimination (rr_elimination)
+- Continue deterministic round-robin but maintain eliminated set per role+epoch.
+- Defaults (configurable):
+  - elim_min_trials = 6
+  - elim_min_mean_clean = 0.1
+  - elim_max_failure_rate = 0.9  (failure_rate = 1 - pass[v]/attempts[v])
+- If attempts[v] >= elim_min_trials AND (mean_clean[v] < elim_min_mean_clean OR failure_rate[v] > elim_max_failure_rate):
+  - mark v eliminated and remove from active set
+- If all variants eliminated:
+  - clear eliminated set and re-enter BOOTSTRAP (deterministic recovery)
+
+Selection determinism requirements:
+- No randomness anywhere.
+- Tie-breakers must be deterministic.
+- Every selection decision must be logged (after Codex run window ends) under /.orchestrator/runs/**.
+
+----------------------------------------------------------------------
+[Design A] Fixer runs (narrow, deterministic)  [Layer N/A]
+- A fixer run is a codex exec step with a minimal prompt focused on one deterministic failure:
+  - create missing file/dir
+  - rename incorrect path
+  - add missing required headings
+  - revert unauthorized modifications (after orchestrator reverts via git restore)
+- Fixer allowlist must be minimal and derived from failure type.
+- Fixers are bounded and counted.
+
+----------------------------------------------------------------------
+[Design B] Deterministic eval scoring + prompt/skill improvement loop  [Layer N/A (meta)]
+[Design B] Deterministic eval score (exact function; required in B)
+- Hard invalidation: if any hard invariant fails, score = -1 (invalid run)
+- Otherwise:
+  score = 0
+  +40 if all required files/dirs exist (including Design B artifacts)
+  +30 if all content validators pass
+  +30 if tests pass (exit code 0)
+  -5  per retry beyond the first attempt across all steps (total retries)
+  -10 per fixer run executed
+  -1  per changed file above 20 total
+- Score floor: minimum 0 (except invalidation uses -1)
+
+[Design B] Prompt Library Bootstrap (only if needed)  [Layer N/A (meta)]
+- Condition: /prompts/** missing/empty OR /.codex/skills/** missing/empty
+- Allowlist: ONLY /prompts/** and /.codex/skills/**
+- Must create:
+  - /prompts/<agent>/*.txt (2–5 variants per agent)
+  - /.codex/skills/<agent>/SKILL.md (YAML front matter + body)
+- Must not modify any other path.
+
+[Design B] Prompt Tuner loop (eval-gated)  [Layer N/A (meta)]
+High-level loop (implemented by Python orchestrator)
+1) Run baseline pipeline using current prompts/skills.
+2) Compute baseline deterministic score; store /.orchestrator/evals/<run_id>.json.
+3) Run Prompt Tuner (one codex exec run) allowlisted ONLY to:
+   - /prompts/**
+   - /.codex/skills/**
+4) Validate tuner changes with deterministic guardrails (below).
+5) Re-score deterministically in regression:
+   - preferred: re-run failing steps or steps whose prompt/skill hashes changed
+   - otherwise: re-run full pipeline
+6) Accept changes ONLY IF:
+   - tuned_score > baseline_score (strict improvement)
+   - AND invariants intact (no forbidden paths touched, no allowlist violations, AGENTS.md unchanged, validators/tests pass)
+   - else revert prompt/skill changes deterministically (git restore)
+
+[Design B] Prompt/skill guardrail validators (hard requirements)  [Layer N/A (meta)]
+- For /.codex/skills/<agent>/SKILL.md:
+  - must start with YAML front matter (--- ... ---)
+  - required keys: name, description
+  - max file size: 64 KB
+  - forbidden substrings (case-insensitive) must NOT appear:
+    - "ignore validators"
+    - "bypass allowlists"
+    - "write outside allowed paths"
+    - "mark step as done even if tests fail"
+    - "modify .orchestrator"
+- For /prompts/** templates:
+  - max file size: 64 KB
+  - same forbidden substrings must NOT appear
+  - must not instruct proceeding on failure or disabling gating
+
+----------------------------------------------------------------------
+[Design A] Implementation constraints (for Codex to implement)  [Layer N/A]
+- Deliver a single runnable Python script at repo root: orchestrator.py
+- Prefer Python stdlib only.
+- Clear logs to console; machine-readable artifacts under /.orchestrator/runs/**.
+- Orchestrator must not author product source files directly; exceptions allowed ONLY for deterministic reverts:
+  - git restore/checkout to revert unauthorized changes or to revert rejected tuner edits (Design B)
+
+[Design A] What Codex must NOT do  [Layer N/A]
+- Do not claim completion based on narrative text.
+- Do not rely on natural-language summaries for gating.
+- Do not modify forbidden paths.
+- Do not introduce infinite loops or unbounded retries.
+
+[Design A] What Codex must DO  [Layer N/A]
+- Implement orchestrator.py meeting ALL [Design A] requirements.
+- If running in Design B mode, implement ALL [Design B] requirements as well.
+- Ensure required files/dirs exist and exact paths match.
+- Enforce strict boundaries: no Codex writes to /.orchestrator/** during Codex run windows, and never ignore those diffs.

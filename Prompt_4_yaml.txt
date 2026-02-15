@@ -1,0 +1,18 @@
+# PROJECT_BRIEF.yaml
+# NOTE: This file is intentionally written as valid JSON (YAML 1.2 JSON subset)
+# so the orchestrator can parse it using Python stdlib `json` without extra deps.
+{
+  "project_type": "scratch_like_game",
+  "stack": {
+    "frontend": { "framework": "nextjs", "language": "typescript", "path": "frontend" },
+    "backend":  { "framework": "node",   "language": "typescript", "path": "backend" },
+    "database": { "engine": "postgres", "local_dev": "docker_compose" },
+    "orm": "prisma"
+  },
+  "tests": {
+    "command_source": "profile",
+    "commands": ["npm test"]
+  }
+}
+
+
