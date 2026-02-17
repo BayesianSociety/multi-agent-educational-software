@@ -1,7 +1,7 @@
 CONTEXT / SPECIFICATION (read fully before responding)
 I’m going to paste a long document.
 Please read it fully and confirm when you’re done.
-Do not analyze or respond until I say so.
+After you fully read the document start executing the prompt from here:
 
 ## Version 3.1 — Hardened Integrated Prompt with Explicit Design A vs Design B Sections
 ## (Repo-resident orchestrator state; deterministic gating; deterministic variant selection)

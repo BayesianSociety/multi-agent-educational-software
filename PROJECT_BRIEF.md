@@ -1,0 +1,68 @@
+# Layer 0 - Non-negotiables
+- **Target platform:** Web (modern browsers)
+- **Audience / age range:** 7-12
+- **Safety & privacy stance:** No accounts, no PII collection, no external network calls required to play levels. Local-only persistence (e.g., localStorage).
+- **Accessibility baseline:** Keyboard operable for core interactions; visible focus states; readable font sizing; avoid color-only meaning; narration text available as on-screen text.
+
+# Layer 1 - MVP + Core learning loop
+## Core learning objectives
+- **Sequencing:** blocks run top-to-bottom / left-to-right in a deterministic order
+- **Procedural thinking:** plan steps to reach a goal
+- **Debugging:** observe step-by-step execution and adjust blocks
+
+## Core experience / gameplay loop
+- Player assembles a small program from blocks (at MVP: **Move**, **Jump**) to guide a dog to a bone.
+- Player presses **Run**.
+- The dog animates while the UI highlights the current block.
+- If the dog fails (falls into a gap, hits obstacle, doesn't reach bone), player edits blocks and tries again.
+
+## MVP scope
+- 10 short levels.
+- Blocks:
+  - **Move(1)**: move dog forward by 1 tile
+  - **Jump**: leap over a single-tile gap/obstacle
+  - **Run/Start**: executes block sequence
+- Minimal tutorial: Level 1 teaches Move; Level 2 teaches Jump.
+- Narrative: one sentence per level + small "story progression" between worlds (e.g., "Taffy is exploring the park to find treats!").
+
+## Non-goals
+- Multiplayer
+- User accounts / cloud saves
+- Complex physics simulation
+- Advanced Scratch features (variables, custom blocks) in MVP
+
+## Acceptance criteria (MVP)
+- Level runner executes blocks deterministically and highlights current block during execution.
+- Level 1 can be solved with a small block sequence (Move/Jump/Move...) to reach the bone.
+- The app stores unlocked levels locally and restores progress on refresh.
+- Tests run deterministically and exit with code 0.
+
+# Layer 2 - Architecture constraints
+- **Backend REQUIRED** for MVP. The `/backend` directory MUST contain server logic.
+- **Frontend framework:** Next.js (TypeScript). The Next.js app MUST live in `/frontend`.
+- **Backend framework:** Node.js API (TypeScript) living in `/backend` (e.g., Express/Fastify) OR Next.js route handlers in `/frontend` (choose ONE and follow it consistently).
+- **Database:** PostgreSQL is the source of truth. Local development MUST use Docker Compose (repo-root `docker-compose.yml`).
+- **Data access / migrations:** Use Prisma (or explicitly choose another migration tool). If Prisma: include `/backend/prisma/schema.prisma` and migrations workflow.
+- **Level format:** JSON files under `/design/levels/` (one file per level) OR stored in Postgres (choose ONE; for MVP prefer JSON-on-disk unless you truly need DB-authored content).
+- **Execution model:** Compile blocks into a simple internal instruction list, then interpret step-by-step deterministically.
+- **Persistence:** Store user progress in Postgres ONLY if you have accounts. If no accounts, store progress locally (localStorage) and keep DB for content/admin only.
+- **Testing:** must run offline and deterministically. Provide a deterministic test command in `TEST.md` and ensure it exits with code 0. Tests MUST spin up Postgres locally (docker compose) or use a deterministic test DB container.
+- **Security:** No secrets committed. Provide `.env.example` and keep real secrets out of the repo.
+
+# Layer 3 - Content & UX specifics (may evolve iteratively under /design/**)
+## Scratch-like editor UX
+- Palette of blocks on the left, workspace in the middle, play area on the right.
+- Blocks snap/connect vertically in a single sequence for MVP.
+- "Run" button starts execution; "Reset" returns dog to start position.
+
+## Level 1 (reference example: dog must reach bone)
+- Narrative bubble: **"Taffy really wants that bone!"**
+- Start: dog on left side of the room.
+- Goal: bone on right side of the room.
+- At least one obstacle in early levels:
+  - Level 1: no gap; solvable with several Move blocks
+  - Level 2+: introduce a gap requiring Jump
+
+## Visual tone
+- Friendly, bright, kid-safe visuals.
+- Simple animations: dog walks, jumps; bone sparkles on success.

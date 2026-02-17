@@ -1,0 +1,34 @@
+Finished reading the full document and executed the implementation work.
+
+Implemented:
+
+- `orchestrator.py` with deterministic Design A core:
+  - Codex feature detection (`codex exec --help`) and compatibility fallback
+  - Step orchestration via multiple `codex exec` subprocess runs
+  - Run-window boundary enforcement with pre/post snapshots
+  - Hard invariants for `/.orchestrator/**` and `/.git/**`
+  - Path-safe allowlist checks (normalization, traversal rejection, symlink handling)
+  - Deterministic revert including unauthorized untracked files
+  - Per-step caps and bounded retries (`max_attempts_per_step=3`)
+  - Deterministic validators, test command extraction/execution, and policy persistence
+  - Deterministic prompt variant selection (bootstrap RR + `ucb1` / `explore_then_commit` / `rr_elimination`)
+  - Run artifacts under `/.orchestrator/runs/**`
+
+- Design B mode (`--design-b`) added:
+  - Prompt/skill bootstrap when missing
+  - Guardrail validators for `/prompts/**` and `/.codex/skills/**`
+  - Deterministic scoring
+  - Prompt tuner loop with strict accept/reject (`tuned_score > baseline_score`) and deterministic revert on rejection
+
+- Added the locked brief content to:
+  - `PROJECT_BRIEF.md`
+
+Validation run:
+- `python3 -m py_compile orchestrator.py` passed.
+- `python3 orchestrator.py --help` works.
+
+Files added/changed:
+- `orchestrator.py`
+- `PROJECT_BRIEF.md`
+
+If you want, next I can run a first real pipeline pass (`--dry-validate` or full run) and fix any validator/test failures it reports.
