@@ -165,8 +165,8 @@ def ensure_git_repo() -> None:
 
 
 def ensure_python_version() -> None:
-    if sys.version_info < (3, 11):
-        raise OrchestratorError(f"{ERROR_PREFIX}PYTHON", "Python 3.11+ required.")
+    if sys.version_info < (3, 10):
+        raise OrchestratorError(f"{ERROR_PREFIX}PYTHON", "Python 3.10+ required.")
 
 
 def ensure_codex_available() -> None:
@@ -1131,7 +1131,13 @@ def build_step_prompt(
 
 
 def codex_exec_step(prompt_text: str, features: CodexFeatureSupport, temp_dir: Path) -> Tuple[int, str, str, Optional[str]]:
-    cmd = ["codex", "exec", "-"]
+    cmd = [
+        "codex",
+        "exec",
+        "--sandbox",
+        "workspace-write",
+        "-",
+    ]
     jsonl_path = None
     if features.experimental_json:
         jsonl_path = str(temp_dir / "codex_events.jsonl")
@@ -1386,7 +1392,16 @@ def run_fixer_if_possible(
 
     pre = snapshot_state()
     with tempfile.TemporaryDirectory(prefix="orchestrator-fixer-") as _tmp:
-        proc = run_cmd(["codex", "exec", "-"], stdin_text=prompt)
+        proc = run_cmd(
+            [
+                "codex",
+                "exec",
+                "--sandbox",
+                "workspace-write",
+                "-",
+            ],
+            stdin_text=prompt,
+        )
     post = snapshot_state()
 
     changed, _deleted, new = changed_paths_from_snapshots(pre, post)
@@ -1419,6 +1434,28 @@ def should_backend_be_required(brief_text: str, brief_cfg: BriefConfig) -> bool:
         return True
     b = brief_cfg.parsed.get("backend_required") if brief_cfg.exists else None
     return bool(b is True)
+
+
+STEP_EXPECTED_ARTIFACTS: Dict[str, Tuple[str, ...]] = {
+    "release_engineer": (".env.example", "docker-compose.yml", ".gitignore"),
+    "requirements": ("REQUIREMENTS.md", "AGENT_TASKS.md"),
+    "designer": ("design/",),
+    "frontend": ("frontend/",),
+    "backend": ("backend/",),
+    "qa": ("tests/", "TEST.md"),
+    "docs": ("REQUIREMENTS.md", "TEST.md", "AGENT_TASKS.md"),
+}
+
+
+def artifact_exists(spec: str) -> bool:
+    if spec.endswith("/"):
+        return (REPO_ROOT / spec[:-1]).is_dir()
+    return (REPO_ROOT / spec).exists()
+
+
+def missing_expected_artifacts_for_step(step: StepSpec) -> List[str]:
+    expected = STEP_EXPECTED_ARTIFACTS.get(step.name, ())
+    return [spec for spec in expected if not artifact_exists(spec)]
 
 
 def lock_violation_in_changes(step: StepSpec, changed_paths: Sequence[str], design_b: bool) -> List[str]:
@@ -1497,7 +1534,16 @@ def maybe_prompt_library_bootstrap(
 
     pre = snapshot_state()
     with tempfile.TemporaryDirectory(prefix="orchestrator-bootstrap-") as _tmp:
-        proc = run_cmd(["codex", "exec", "-"], stdin_text=prompt)
+        proc = run_cmd(
+            [
+                "codex",
+                "exec",
+                "--sandbox",
+                "workspace-write",
+                "-",
+            ],
+            stdin_text=prompt,
+        )
     post = snapshot_state()
 
     changed, _deleted, new = changed_paths_from_snapshots(pre, post)
@@ -1574,6 +1620,7 @@ def execute_specialist_steps(
         step_errors: List[str] = []
 
         for attempt in range(attempts_limit):
+            missing_before = missing_expected_artifacts_for_step(step)
             result = run_step_once(
                 step=step,
                 step_attempt=attempt,
@@ -1603,6 +1650,17 @@ def execute_specialist_steps(
                 if attempt > 0:
                     retries_beyond_first_total += 1
                 continue
+
+            if not result.changed_paths and missing_before:
+                unresolved = [spec for spec in missing_before if not artifact_exists(spec)]
+                if unresolved:
+                    step_errors.append(
+                        f"No-op step with missing expected artifacts for {step.name}: {', '.join(unresolved)}"
+                    )
+                    maybe_update_constraint_patch(policy, step.name, ["NO_OP_WITH_MISSING_ARTIFACTS"])
+                    if attempt > 0:
+                        retries_beyond_first_total += 1
+                    continue
 
             # Success for this step attempt, move on.
             step_ok = True

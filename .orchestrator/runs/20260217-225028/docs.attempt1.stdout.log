@@ -1,0 +1,14 @@
+Updated `TEST.md` with a strict minimal edit to align docs with the brief:
+
+- Kept the verified deterministic offline command: `npm --prefix frontend run test`
+- Added a Docker Compose SQLite variant:
+  - `docker compose up -d sqlite`
+  - `npm --prefix frontend run test`
+  - `docker compose stop sqlite`
+
+Validation status:
+- Confirmed `npm --prefix frontend run test` passes with exit code `0`.
+- Could not run Docker Compose in this environment because `docker` is not installed/available in the current WSL distro.
+
+Only file changed:
+- `TEST.md`

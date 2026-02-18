@@ -1,0 +1,74 @@
+{
+  "baseline": {
+    "changed_files_total": 0,
+    "fixer_runs_total": 0,
+    "hard_invalid": true,
+    "required_ok": true,
+    "retries_beyond_first_total": 2,
+    "score": 0,
+    "steps": [
+      {
+        "errors": [
+          "codex exit nonzero for release_engineer: 1",
+          "codex exit nonzero for release_engineer: 1",
+          "codex exit nonzero for release_engineer: 1"
+        ],
+        "ok": false,
+        "step": "release_engineer"
+      }
+    ],
+    "test_results": [
+      {
+        "command": "npm --prefix frontend run test",
+        "exit_code": 0,
+        "stderr": "",
+        "stdout": "\n> taffy-frontend@0.1.0 test\n> node --experimental-strip-types --experimental-specifier-resolution=node --test ../tests/**/*.test.ts\n\n\u2714 ../tests/backend.levels.test.ts (90.100934ms)\n\u2714 ../tests/backend.server.test.ts (110.302592ms)\n\u2714 ../tests/engine.test.ts (86.157683ms)\n\u2139 tests 3\n\u2139 suites 0\n\u2139 pass 3\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 118.89465\n"
+      }
+    ],
+    "tests_error": null,
+    "tests_ok": true,
+    "validator_error_codes": [],
+    "validator_errors": [],
+    "validators_ok": true
+  },
+  "bootstrap_prompt_library": false,
+  "design_b": false,
+  "features": {
+    "experimental_json": false,
+    "output_schema": true
+  },
+  "final": {
+    "changed_files_total": 0,
+    "fixer_runs_total": 0,
+    "hard_invalid": true,
+    "required_ok": true,
+    "retries_beyond_first_total": 2,
+    "score": 0,
+    "steps": [
+      {
+        "errors": [
+          "codex exit nonzero for release_engineer: 1",
+          "codex exit nonzero for release_engineer: 1",
+          "codex exit nonzero for release_engineer: 1"
+        ],
+        "ok": false,
+        "step": "release_engineer"
+      }
+    ],
+    "test_results": [
+      {
+        "command": "npm --prefix frontend run test",
+        "exit_code": 0,
+        "stderr": "",
+        "stdout": "\n> taffy-frontend@0.1.0 test\n> node --experimental-strip-types --experimental-specifier-resolution=node --test ../tests/**/*.test.ts\n\n\u2714 ../tests/backend.levels.test.ts (90.100934ms)\n\u2714 ../tests/backend.server.test.ts (110.302592ms)\n\u2714 ../tests/engine.test.ts (86.157683ms)\n\u2139 tests 3\n\u2139 suites 0\n\u2139 pass 3\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 118.89465\n"
+      }
+    ],
+    "tests_error": null,
+    "tests_ok": true,
+    "validator_error_codes": [],
+    "validator_errors": [],
+    "validators_ok": true
+  },
+  "run_id": "20260217-231454",
+  "tuner": null
+}

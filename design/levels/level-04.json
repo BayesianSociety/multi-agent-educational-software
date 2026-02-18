@@ -1,0 +1,16 @@
+{
+  "id": 4,
+  "slug": "park-log",
+  "world": "Park",
+  "narrative": "A fallen log blocks the way, but Taffy is ready.",
+  "tutorialFocus": "Jump timing",
+  "grid": {
+    "length": 10,
+    "start": 0,
+    "goal": 8,
+    "gaps": [],
+    "obstacles": [5]
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Move", "Move", "Jump", "Move", "Move"]
+}

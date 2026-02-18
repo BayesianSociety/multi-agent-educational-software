@@ -1,0 +1,34 @@
+services:
+  sqlite:
+    image: keinos/sqlite3:latest
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    command: ["tail", "-f", "/dev/null"]
+
+  backend:
+    image: node:20-alpine
+    working_dir: /workspace/backend
+    volumes:
+      - ./:/workspace
+    environment:
+      - DATABASE_URL=file:./dev.db
+      - PORT=4000
+    command: ["sh", "-lc", "if [ -f package.json ]; then npm ci && npm run dev; else echo 'backend/package.json missing'; tail -f /dev/null; fi"]
+    depends_on:
+      - sqlite
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /workspace/frontend
+    volumes:
+      - ./:/workspace
+    environment:
+      - PORT=3000
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+    command: ["sh", "-lc", "if [ -f package.json ]; then npm ci && npm run dev; else echo 'frontend/package.json missing'; tail -f /dev/null; fi"]
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+

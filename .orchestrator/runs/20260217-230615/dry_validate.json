@@ -1,0 +1,34 @@
+{
+  "tests": [],
+  "tests_error": "TEST_CMD_MISSING",
+  "tests_ok": false,
+  "validator_error_codes": [
+    "REQ_HEADING_MISSING",
+    "REQ_HEADING_MISSING",
+    "REQ_HEADING_MISSING",
+    "REQ_HEADING_MISSING",
+    "REQ_HEADING_MISSING",
+    "TEST_HEADING_MISSING",
+    "TEST_HEADING_MISSING",
+    "AGENT_TASKS_SECTION_MISSING",
+    "AGENT_TASKS_SECTION_MISSING",
+    "AGENT_TASKS_SECTION_MISSING",
+    "AGENT_TASKS_SECTION_MISSING",
+    "AGENT_TASKS_BRIEF_REF_MISSING"
+  ],
+  "validator_messages": [
+    "REQUIREMENTS.md missing heading: # Overview",
+    "REQUIREMENTS.md missing heading: # Scope",
+    "REQUIREMENTS.md missing heading: # Non-Goals",
+    "REQUIREMENTS.md missing heading: # Acceptance Criteria",
+    "REQUIREMENTS.md missing heading: # Risks",
+    "Missing # How to run tests",
+    "Missing # Environments",
+    "Missing section: ## Designer",
+    "Missing section: ## Frontend",
+    "Missing section: ## Backend",
+    "Missing section: ## QA",
+    "AGENT_TASKS.md must reference Project Brief"
+  ],
+  "validators_ok": false
+}

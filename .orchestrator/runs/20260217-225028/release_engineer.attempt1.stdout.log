@@ -1,0 +1,16 @@
+Implemented strict minimal release-engineer edits within the allowlist:
+
+1. Added environment template in `.env.example`
+2. Added baseline ignores in `.gitignore`
+3. Added deterministic test instructions in `TEST.md`
+4. Added local Docker Compose baseline in `docker-compose.yml` (SQLite utility container + backend/frontend placeholders)
+
+Validation run:
+1. Executed the command documented in `TEST.md`
+2. Result: exit code `0` with output `No tests committed yet (deterministic no-op).`
+
+Changed files:
+- `.env.example`
+- `.gitignore`
+- `TEST.md`
+- `docker-compose.yml`

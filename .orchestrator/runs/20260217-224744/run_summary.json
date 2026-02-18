@@ -1,0 +1,116 @@
+{
+  "baseline": {
+    "changed_files_total": 0,
+    "fixer_runs_total": 0,
+    "hard_invalid": true,
+    "required_ok": false,
+    "retries_beyond_first_total": 2,
+    "score": 0,
+    "steps": [
+      {
+        "errors": [
+          "codex exit nonzero for release_engineer: 2",
+          "codex exit nonzero for release_engineer: 2",
+          "codex exit nonzero for release_engineer: 2"
+        ],
+        "ok": false,
+        "step": "release_engineer"
+      }
+    ],
+    "test_results": [],
+    "tests_error": "TEST_MD_MISSING",
+    "tests_ok": false,
+    "validator_error_codes": [
+      "REQUIRED_FILE_MISSING",
+      "REQUIRED_FILE_MISSING",
+      "REQUIRED_FILE_MISSING",
+      "REQUIRED_DIR_MISSING",
+      "REQUIRED_DIR_MISSING",
+      "REQUIRED_DIR_MISSING",
+      "REQUIRED_DIR_MISSING",
+      "REQ_MD_MISSING",
+      "TEST_MD_MISSING",
+      "AGENT_TASKS_MISSING",
+      "COMPOSE_MISSING",
+      "ENV_EXAMPLE_MISSING",
+      "GITIGNORE_ENV_MISSING"
+    ],
+    "validator_errors": [
+      "Missing required file: REQUIREMENTS.md",
+      "Missing required file: TEST.md",
+      "Missing required file: AGENT_TASKS.md",
+      "Missing required dir: design",
+      "Missing required dir: frontend",
+      "Missing required dir: backend",
+      "Missing required dir: tests",
+      "REQUIREMENTS.md missing",
+      "TEST.md missing",
+      "AGENT_TASKS.md missing",
+      "docker-compose.yml required",
+      ".env.example required",
+      ".gitignore must include .env"
+    ],
+    "validators_ok": false
+  },
+  "bootstrap_prompt_library": false,
+  "design_b": false,
+  "features": {
+    "experimental_json": false,
+    "output_schema": true
+  },
+  "final": {
+    "changed_files_total": 0,
+    "fixer_runs_total": 0,
+    "hard_invalid": true,
+    "required_ok": false,
+    "retries_beyond_first_total": 2,
+    "score": 0,
+    "steps": [
+      {
+        "errors": [
+          "codex exit nonzero for release_engineer: 2",
+          "codex exit nonzero for release_engineer: 2",
+          "codex exit nonzero for release_engineer: 2"
+        ],
+        "ok": false,
+        "step": "release_engineer"
+      }
+    ],
+    "test_results": [],
+    "tests_error": "TEST_MD_MISSING",
+    "tests_ok": false,
+    "validator_error_codes": [
+      "REQUIRED_FILE_MISSING",
+      "REQUIRED_FILE_MISSING",
+      "REQUIRED_FILE_MISSING",
+      "REQUIRED_DIR_MISSING",
+      "REQUIRED_DIR_MISSING",
+      "REQUIRED_DIR_MISSING",
+      "REQUIRED_DIR_MISSING",
+      "REQ_MD_MISSING",
+      "TEST_MD_MISSING",
+      "AGENT_TASKS_MISSING",
+      "COMPOSE_MISSING",
+      "ENV_EXAMPLE_MISSING",
+      "GITIGNORE_ENV_MISSING"
+    ],
+    "validator_errors": [
+      "Missing required file: REQUIREMENTS.md",
+      "Missing required file: TEST.md",
+      "Missing required file: AGENT_TASKS.md",
+      "Missing required dir: design",
+      "Missing required dir: frontend",
+      "Missing required dir: backend",
+      "Missing required dir: tests",
+      "REQUIREMENTS.md missing",
+      "TEST.md missing",
+      "AGENT_TASKS.md missing",
+      "docker-compose.yml required",
+      ".env.example required",
+      ".gitignore must include .env"
+    ],
+    "validators_ok": false
+  },
+  "run_id": "20260217-224744",
+  "tuner": null
+}

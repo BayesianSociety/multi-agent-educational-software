@@ -1,0 +1,16 @@
+{
+  "id": 3,
+  "slug": "park-path",
+  "world": "Park",
+  "narrative": "Taffy trots down the park path toward another treat.",
+  "tutorialFocus": "Sequencing",
+  "grid": {
+    "length": 10,
+    "start": 0,
+    "goal": 8,
+    "gaps": [4],
+    "obstacles": []
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Move", "Jump", "Move", "Move", "Move"]
+}

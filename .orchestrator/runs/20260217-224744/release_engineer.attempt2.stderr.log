@@ -1,0 +1,9 @@
+WARNING: failed to clean up stale arg0 temp dirs: Permission denied (os error 13)
+WARNING: proceeding, even though we could not update PATH: Permission denied (os error 13) at path "/home/postnl/.codex/tmp/arg0/codex-arg0jskYIM"
+error: unexpected argument '--ask-for-approval' found
+
+  tip: to pass '--ask-for-approval' as a value, use '-- --ask-for-approval'
+
+Usage: codex exec --sandbox <SANDBOX_MODE> [PROMPT]
+
+For more information, try '--help'.

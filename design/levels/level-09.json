@@ -1,0 +1,16 @@
+{
+  "id": 9,
+  "slug": "garden-gate",
+  "world": "Garden",
+  "narrative": "Taffy enters the garden where treats are hidden by flowers.",
+  "tutorialFocus": "Mixed hazards",
+  "grid": {
+    "length": 14,
+    "start": 0,
+    "goal": 12,
+    "gaps": [5],
+    "obstacles": [9]
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Move", "Move", "Jump", "Move", "Move", "Move", "Jump", "Move", "Move"]
+}

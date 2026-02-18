@@ -1,0 +1,30 @@
+Implemented the backend step with strict minimal edits, only in allowed paths.
+
+**What I changed**
+1. Added a minimal Node.js TypeScript backend in `backend/**`:
+- `backend/package.json`
+- `backend/tsconfig.json`
+- `backend/src/levelsRepository.ts`
+- `backend/src/server.ts`
+
+2. Added Prisma + SQLite schema:
+- `backend/prisma/schema.prisma`
+
+3. Added deterministic backend tests:
+- `tests/backend.levels.test.ts`
+- `tests/backend.server.test.ts`
+
+4. Updated deterministic test doc:
+- `TEST.md`
+
+**Backend behavior added**
+- `GET /health` -> `{ "status": "ok" }`
+- `GET /api/levels` -> returns all levels loaded from `design/levels/*.json`
+- `GET /api/levels/:id` -> returns one level or 404
+
+**Validation**
+- Ran: `npm --prefix frontend run test`
+- Result: pass (exit code `0`) with all tests green:
+  - `tests/backend.levels.test.ts`
+  - `tests/backend.server.test.ts`
+  - `tests/engine.test.ts`

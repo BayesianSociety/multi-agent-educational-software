@@ -1,0 +1,14 @@
+Implemented the `requirements` step with minimal edits to the allowlisted files only:
+
+- Created `REQUIREMENTS.md` with concise MVP requirements:
+  - Functional requirements (`Move`, `Jump`, `Run/Reset`, 10 levels, deterministic execution, block highlighting, retry loop, localStorage progress)
+  - Architecture/data constraints (`/frontend` Next.js TS, `/backend` Node TS, SQLite, Prisma, `docker-compose.yml`, level JSON under `/design/levels/`)
+  - Privacy/accessibility/testing non-functionals
+  - Explicit MVP non-goals
+- Created `AGENT_TASKS.md` with:
+  - Completed checklist for this requirements step
+  - Minimal handoff checklist for downstream implementation steps
+
+Files:
+- `REQUIREMENTS.md`
+- `AGENT_TASKS.md`

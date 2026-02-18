@@ -1,0 +1,16 @@
+{
+  "id": 8,
+  "slug": "beach-wave-gap",
+  "world": "Beach",
+  "narrative": "A wave carved two rough spots in Taffy's route.",
+  "tutorialFocus": "Two jumps",
+  "grid": {
+    "length": 14,
+    "start": 0,
+    "goal": 12,
+    "gaps": [3, 9],
+    "obstacles": []
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Jump", "Move", "Move", "Move", "Move", "Move", "Jump", "Move", "Move"]
+}

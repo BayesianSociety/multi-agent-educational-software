@@ -1,0 +1,16 @@
+{
+  "id": 10,
+  "slug": "garden-finale",
+  "world": "Garden",
+  "narrative": "Final stop: one big sprint and Taffy earns the grand bone!",
+  "tutorialFocus": "Mastery",
+  "grid": {
+    "length": 15,
+    "start": 0,
+    "goal": 13,
+    "gaps": [4, 10],
+    "obstacles": [7]
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Move", "Jump", "Move", "Move", "Jump", "Move", "Move", "Jump", "Move", "Move"]
+}

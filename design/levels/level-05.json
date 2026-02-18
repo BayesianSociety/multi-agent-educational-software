@@ -1,0 +1,16 @@
+{
+  "id": 5,
+  "slug": "park-double-trick",
+  "world": "Park",
+  "narrative": "Taffy spots two tricky spots before snack time.",
+  "tutorialFocus": "Plan ahead",
+  "grid": {
+    "length": 12,
+    "start": 0,
+    "goal": 10,
+    "gaps": [3],
+    "obstacles": [7]
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Jump", "Move", "Move", "Move", "Jump", "Move", "Move"]
+}

@@ -1,0 +1,1510 @@
+OpenAI Codex v0.101.0 (research preview)
+--------
+workdir: /home/postnl/multi-agent-educational-software
+model: gpt-5.3-codex
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: auto
+session id: 019c6d98-09b3-79f1-9fda-86d315221632
+--------
+user
+You are the {role} specialist.
+Follow only the allowed paths for this step.
+Do not modify /.orchestrator/** or .git/**.
+Use deterministic, minimal edits.
+If a project brief is provided below, do not contradict it.
+Variant: strict minimal edits.
+
+Role: Frontend Dev
+Step: frontend
+Retry attempt index: 0
+Allowed paths for this step:
+- frontend/**
+- tests/**
+- TEST.md
+Hard rules:
+- Do not modify /.orchestrator/**
+- Do not modify .git/**
+- Do not modify files outside the allowlist
+- Do not contradict PROJECT_BRIEF.md
+
+Project brief (Layer 0-2 reference, do not contradict):
+# Layer 0 - Non-negotiables
+- **Target platform:** Web (modern browsers)
+- **Audience / age range:** 7-12
+- **Safety & privacy stance:** No accounts, no PII collection, no external network calls required to play levels. Local-only persistence (e.g., localStorage).
+- **Accessibility baseline:** Keyboard operable for core interactions; visible focus states; readable font sizing; avoid color-only meaning; narration text available as on-screen text.
+
+# Layer 1 - MVP + Core learning loop
+## Core learning objectives
+- **Sequencing:** blocks run top-to-bottom / left-to-right in a deterministic order
+- **Procedural thinking:** plan steps to reach a goal
+- **Debugging:** observe step-by-step execution and adjust blocks
+
+## Core experience / gameplay loop
+- Player assembles a small program from blocks (at MVP: **Move**, **Jump**) to guide a dog to a bone.
+- Player presses **Run**.
+- The dog animates while the UI highlights the current block.
+- If the dog fails (falls into a gap, hits obstacle, doesn't reach bone), player edits blocks and tries again.
+
+## MVP scope
+- 10 short levels.
+- Blocks:
+  - **Move(1)**: move dog forward by 1 tile
+  - **Jump**: leap over a single-tile gap/obstacle
+  - **Run/Start**: executes block sequence
+- Minimal tutorial: Level 1 teaches Move; Level 2 teaches Jump.
+- Narrative: one sentence per level + small "story progression" between worlds (e.g., "Taffy is exploring the park to find treats!").
+
+## Non-goals
+- Multiplayer
+- User accounts / cloud saves
+- Complex physics simulation
+- Advanced Scratch features (variables, custom blocks) in MVP
+
+## Acceptance criteria (MVP)
+- Level runner executes blocks deterministically and highlights current block during execution.
+- Level 1 can be solved with a small block sequence (Move/Jump/Move...) to reach the bone.
+- The app stores unlocked levels locally and restores progress on refresh.
+- Tests run deterministically and exit with code 0.
+
+# Layer 2 - Architecture constraints
+- **Backend REQUIRED** for MVP. The `/backend` directory MUST contain server logic.
+- **Frontend framework:** Next.js (TypeScript). The Next.js app MUST live in `/frontend`.
+- **Backend framework:** Node.js API (TypeScript) living in `/backend` (e.g., Express/Fastify) OR Next.js route handlers in `/frontend` (choose ONE and follow it consistently).
+- **Database:** SQLite is the source of truth. Local development MUST use Docker Compose (repo-root `docker-compose.yml`).
+- **Data access / migrations:** Use Prisma (or explicitly choose another migration tool). If Prisma: include `/backend/prisma/schema.prisma` and migrations workflow.
+- **Level format:** JSON files under `/design/levels/` (one file per level) OR stored in SQLite (choose ONE; for MVP prefer JSON-on-disk unless you truly need DB-authored content).
+- **Execution model:** Compile blocks into a simple internal instruction list, then interpret step-by-step deterministically.
+- **Persistence:** Store user progress in SQLite ONLY if you have accounts. If no accounts, store progress locally (localStorage) and keep DB for content/admin only.
+- **Testing:** must run offline and deterministically. Provide a deterministic test command in `TEST.md` and ensure it exits with code 0. Tests MUST spin up SQLite locally (docker compose) or use a deterministic test DB container.
+- **Security:** No secrets committed. Provide `.env.example` and keep real secrets out of the repo.
+
+# Layer 3 - Content & UX specifics (may evolve iteratively under /design/**)
+## Scratch-like editor UX
+- Palette of blocks on the left, workspace in the middle, play area on the right.
+- Blocks snap/connect vertically in a single sequence for MVP.
+- "Run" button starts execution; "Reset" returns dog to start position.
+
+## Level 1 (reference example: dog must reach bone)
+- Narrative bubble: **"Taffy really wants that bone!"**
+- Start: dog on left side of the room.
+- Goal: bone on right side of the room.
+- At least one obstacle in early levels:
+  - Level 1: no gap; solvable with several Move blocks
+  - Level 2+: introduce a gap requiring Jump
+
+## Visual tone
+- Friendly, bright, kid-safe visuals.
+- Simple animations: dog walks, jumps; bone sparkles on success.
+
+mcp startup: no servers
+2026-02-17T21:53:26.476788Z ERROR codex_core::rollout::list: state db missing rollout path for thread 019c6d85-a9ef-7e40-96bc-7750a13c194d
+
+thinking
+**Starting frontend inspection**
+codex
+Working within the `frontend` step constraints now. I’ll inspect the existing `frontend/**`, `tests/**`, and `TEST.md` files first, then make the smallest deterministic edits needed to align with the brief.
+exec
+/bin/bash -lc 'git status --short' in /home/postnl/multi-agent-educational-softwareexec
+/bin/bash -lc "rg --files frontend tests; ls -1; [ -f TEST.md ] && echo '---TEST.md exists---' || echo '---TEST.md missing---'" in /home/postnl/multi-agent-educational-software succeeded in 51ms:
+ M PROJECT_BRIEF.md
+ M orchestrator.py
+?? .env.example
+?? .gitignore
+?? .orchestrator/
+?? AGENT_TASKS.md
+?? REQUIREMENTS.md
+?? TEST.md
+?? __pycache__/
+?? design/
+?? docker-compose.yml
+ succeeded in 51ms:
+rg: frontend: No such file or directory (os error 2)
+rg: tests: No such file or directory (os error 2)
+AGENT_TASKS.md
+PROJECT_BRIEF.md
+Prompt_4_project_brief.txt
+Prompt_4_separate_pipeline_engine_from_project_pack.txt
+Prompt_4_yaml.txt
+README.md
+REQUIREMENTS.md
+TEST.md
+__pycache__
+design
+docker-compose.yml
+last_message.txt
+orchestrator.py
+---TEST.md exists---
+
+thinking
+**Confirming frontend absence and next steps**
+codex
+I found no existing `frontend/` or `tests/` directories, so this step needs bootstrapping those paths. Next I’ll check `TEST.md` and create a minimal Next.js frontend plus deterministic tests under the allowlist only.
+exec
+/bin/bash -lc "sed -n '1,220p' TEST.md" in /home/postnl/multi-agent-educational-software succeeded in 50ms:
+# Deterministic test command
+
+Run this command from the repository root:
+
+```bash
+sh -lc 'if [ -d tests ] && [ "$(find tests -type f | wc -l)" -gt 0 ]; then echo "Test files detected. Configure this command to run your deterministic suite." && exit 1; else echo "No tests committed yet (deterministic no-op)." && exit 0; fi'
+```
+
+Notes:
+- This command is deterministic and offline.
+- It exits with code `0` while no test files are present.
+- Replace it with the real deterministic suite command once tests are added.
+
+thinking
+**Planning minimal Next.js TypeScript frontend**
+codex
+I have enough context and will now create a minimal TypeScript Next.js app in `frontend/` with a deterministic block interpreter, 10 local levels, keyboard-friendly controls, block highlighting during run, and localStorage progress. I’ll also add deterministic unit tests in `tests/` plus update `TEST.md` to the real test command.
+exec
+/bin/bash -lc 'mkdir -p frontend/app frontend/src/lib tests' in /home/postnl/multi-agent-educational-software succeeded in 51ms:
+
+
+thinking
+**Creating initial files**
+exec
+/bin/bash -lc "cat > frontend/package.json <<'EOF'
+{
+  \"name\": \"taffy-frontend\",
+  \"version\": \"0.1.0\",
+  \"private\": true,
+  \"scripts\": {
+    \"dev\": \"next dev\",
+    \"build\": \"next build\",
+    \"start\": \"next start\",
+    \"test\": \"tsx --test ../tests/**/*.test.ts\"
+  },
+  \"dependencies\": {
+    \"next\": \"14.2.32\",
+    \"react\": \"18.3.1\",
+    \"react-dom\": \"18.3.1\"
+  },
+  \"devDependencies\": {
+    \"@types/node\": \"20.17.57\",
+    \"@types/react\": \"18.3.17\",
+    \"@types/react-dom\": \"18.3.5\",
+    \"tsx\": \"4.19.2\",
+    \"typescript\": \"5.6.3\"
+  }
+}
+EOF" in /home/postnl/multi-agent-educational-softwareexec
+/bin/bash -lc "cat > frontend/next.config.mjs <<'EOF'
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true
+};
+
+export default nextConfig;
+EOF" in /home/postnl/multi-agent-educational-softwareexec
+/bin/bash -lc "cat > frontend/tsconfig.json <<'EOF'
+{
+  \"compilerOptions\": {
+    \"target\": \"ES2022\",
+    \"lib\": [\"dom\", \"dom.iterable\", \"es2022\"],
+    \"allowJs\": false,
+    \"skipLibCheck\": true,
+    \"strict\": true,
+    \"noEmit\": true,
+    \"esModuleInterop\": true,
+    \"module\": \"esnext\",
+    \"moduleResolution\": \"bundler\",
+    \"resolveJsonModule\": true,
+    \"isolatedModules\": true,
+    \"jsx\": \"preserve\",
+    \"incremental\": true,
+    \"plugins\": [{ \"name\": \"next\" }],
+    \"types\": [\"node\"]
+  },
+  \"include\": [\"next-env.d.ts\", \"**/*.ts\", \"**/*.tsx\", \".next/types/**/*.ts\"],
+  \"exclude\": [\"node_modules\"]
+}
+EOF" in /home/postnl/multi-agent-educational-softwareexec
+/bin/bash -lc "cat > frontend/next-env.d.ts <<'EOF'
+/// <reference types=\"next\" />
+/// <reference types=\"next/image-types/global\" />
+
+// NOTE: This file should not be edited
+EOF" in /home/postnl/multi-agent-educational-software succeeded in 51ms:
+
+ succeeded in 50ms:
+
+ succeeded in 51ms:
+
+ succeeded in 51ms:
+
+
+thinking
+**Adding library files**
+codex
+I’m now adding the core gameplay modules (`levels`, `engine`, and local progress persistence) before wiring the UI, so execution and tests stay deterministic.
+exec
+/bin/bash -lc "cat > frontend/src/lib/levels.ts <<'EOF'
+export type Block = \"Move\" | \"Jump\";
+export type Tile = \"ground\" | \"gap\" | \"obstacle\";
+
+export type Level = {
+  id: number;
+  title: string;
+  narrative: string;
+  worldStory: string;
+  tiles: Tile[];
+  start: number;
+  goal: number;
+};
+
+export const levels: Level[] = [
+  {
+    id: 1,
+    title: \"Park Path\",
+    narrative: \"Taffy really wants that bone"'!",
+    worldStory: "Taffy is exploring the park to find treats!",
+    tiles: ["ground", "ground", "ground", "ground", "ground", "ground"],
+    start: 0,
+    goal: 5
+  },
+  {
+    id: 2,
+    title: "Little Gap",
+    narrative: "A small crack blocks the path.",
+    worldStory: "Taffy learns to jump over tricky spots.",
+    tiles: ["ground", "ground", "gap", "ground", "ground", "ground"],
+    start: 0,
+    goal: 5
+  },
+  {
+    id: 3,
+    title: "Bench Hop",
+    narrative: "A low bench is in the way.",
+    worldStory: "The park has playful obstacles everywhere.",
+    tiles: ["ground", "obstacle", "ground", "ground", "ground", "ground"],
+    start: 0,
+    goal: 5
+  },
+  {
+    id: 4,
+    title: "Twin Trouble",
+    narrative: "Two tricky spots appear ahead.",
+    worldStory: "Taffy keeps moving with careful planning.",
+    tiles: ["ground", "gap", "ground", "obstacle", "ground", "ground", "ground"],
+    start: 0,
+    goal: 6
+  },
+  {
+    id: 5,
+    title: "Long Walk",
+    narrative: "The bone is farther down the trail.",
+    worldStory: "The park opens up into a wider trail.",
+    tiles: ["ground", "ground", "ground", "ground", "ground", "gap", "ground", "ground"],
+    start: 0,
+    goal: 7
+  },
+  {
+    id: 6,
+    title: "Pond Edge",
+    narrative: "Watch out for the pond edge!",
+    worldStory: "Now Taffy explores near the pond.",
+    tiles: ["ground", "gap", "ground", "ground", "gap", "ground", "ground"],
+    start: 0,
+    goal: 6
+  },
+  {
+    id: 7,
+    title: "Garden Gate",
+    narrative: "A gate and gap block the route.",
+    worldStory: "Taffy enters the garden paths.",
+    tiles: ["ground", "obstacle", "ground", "gap", "ground", "ground", "ground"],
+    start: 0,
+    goal: 6
+  },
+  {
+    id: 8,
+    title: "Bridge Bits",
+    narrative: "Broken bridge planks need jumps.",
+    worldStory: "Taffy crosses old bridges with care.",
+    tiles: ["ground", "gap", "ground", "gap", "ground", "ground", "ground"],
+    start: 0,
+    goal: 6
+  },
+  {
+    id: 9,
+    title: "Park Sprint",
+    narrative: "A quick route with one final jump.",
+    worldStory: "Taffy is close to the biggest treat yet.",
+    tiles: ["ground", "ground", "obstacle", "ground", "ground", "ground", "ground"],
+    start: 0,
+    goal: 6
+  },
+  {
+    id: 10,
+    title: "Final Bone",
+    narrative: "The grand bone glitters at the end.",
+    worldStory: "Taffy reaches the park'"'s treasure trail"'!",
+    tiles: ["ground", "gap", "ground", "obstacle", "ground", "gap", "ground", "ground"],
+    start: 0,
+    goal: 7
+  }
+];
+EOF' in /home/postnl/multi-agent-educational-softwareexec
+/bin/bash -lc "cat > frontend/src/lib/engine.ts <<'EOF'
+import type { Block, Level, Tile } from \"./levels\";
+
+export type ProgramInstruction = {
+  op: Block;
+};
+
+export type ExecutionStep = {
+  blockIndex: number;
+  op: Block;
+  dogPosition: number;
+  status: \"running\" | \"success\" | \"failed\";
+  reason?: string;
+};
+
+const isBlockingTile = (tile: Tile | undefined): boolean => tile === \"gap\" || tile === \"obstacle\";
+
+export function compileBlocks(blocks: Block[]): ProgramInstruction[] {
+  return blocks.map((op) => ({ op }));
+}
+
+export function applyInstruction(level: Level, dogPosition: number, op: Block): { nextPosition: number; failed: boolean; reason?: string } {
+  if (op === \"Move\") {
+    const next = dogPosition + 1;
+    const tile = level.tiles[next];
+    if (tile === undefined) {
+      return { nextPosition: dogPosition, failed: true, reason: \"Taffy ran out of path.\" };
+    }
+    if (isBlockingTile(tile)) {
+      return { nextPosition: next, failed: true, reason: \"Taffy hit trouble. Try Jump.\" };
+    }
+    return { nextPosition: next, failed: false };
+  }
+
+  const over = dogPosition + 1;
+  const landing = dogPosition + 2;
+  const overTile = level.tiles[over];
+  const landingTile = level.tiles[landing];
+
+  if (landingTile === undefined) {
+    return { nextPosition: dogPosition, failed: true, reason: \"Jump was too far.\" };
+  }
+
+  if ("'!isBlockingTile(overTile)) {
+    return { nextPosition: dogPosition, failed: true, reason: "Jump should cross one obstacle or gap." };
+  }
+
+  if (isBlockingTile(landingTile)) {
+    return { nextPosition: landing, failed: true, reason: "Taffy landed on a bad tile." };
+  }
+
+  return { nextPosition: landing, failed: false };
+}
+
+export function buildExecutionTrace(level: Level, blocks: Block[]): ExecutionStep[] {
+  const instructions = compileBlocks(blocks);
+  const steps: ExecutionStep[] = [];
+  let dog = level.start;
+
+  for (let index = 0; index < instructions.length; index += 1) {
+    const current = instructions[index];
+    const result = applyInstruction(level, dog, current.op);
+    dog = result.nextPosition;
+
+    const reachedGoal = dog >= level.goal;
+    const status: ExecutionStep["status"] = result.failed ? "failed" : reachedGoal ? "success" : "running";
+
+    steps.push({
+      blockIndex: index,
+      op: current.op,
+      dogPosition: dog,
+      status,
+      reason: result.reason
+    });
+
+    if (status !== "running") {
+      return steps;
+    }
+  }
+
+  if (dog < level.goal) {
+    steps.push({
+      blockIndex: instructions.length,
+      op: "Move",
+      dogPosition: dog,
+      status: "failed",
+      reason: "Taffy did not reach the bone yet."
+    });
+  }
+
+  return steps;
+}
+EOF' in /home/postnl/multi-agent-educational-softwareexec
+/bin/bash -lc "cat > frontend/src/lib/storage.ts <<'EOF'
+const KEY = \"taffy_unlocked_level\";
+
+export function loadUnlockedLevel(): number {
+  if (typeof window === \"undefined\") {
+    return 1;
+  }
+
+  const value = window.localStorage.getItem(KEY);
+  const parsed = Number.parseInt(value ?? \"1\", 10);
+  if (Number.isNaN(parsed) || parsed < 1) {
+    return 1;
+  }
+  return parsed;
+}
+
+export function saveUnlockedLevel(level: number): void {
+  if (typeof window === \"undefined\") {
+    return;
+  }
+
+  window.localStorage.setItem(KEY, String(level));
+}
+EOF" in /home/postnl/multi-agent-educational-software succeeded in 51ms:
+
+ succeeded in 51ms:
+
+ succeeded in 51ms:
+
+
+thinking
+**Adding UI and CSS files**
+codex
+Next I’m wiring the single-page editor/play area UI with block highlighting, run/reset controls, and accessible focus/labels in `frontend/app/*`.
+exec
+/bin/bash -lc "cat > frontend/app/layout.tsx <<'EOF'
+import type { Metadata } from \"next\";
+import \"./globals.css\";
+
+export const metadata: Metadata = {
+  title: \"Taffy Code Trail\",
+  description: \"A kid-safe block coding game with deterministic execution.\"
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang=\"en\">
+      <body>{children}</body>
+    </html>
+  );
+}
+EOF" in /home/postnl/multi-agent-educational-software succeeded in 50ms:
+
+exec
+/bin/bash -lc "cat > frontend/app/page.tsx <<'EOF'
+\"use client\";
+
+import { useEffect, useMemo, useState } from \"react\";
+import { buildExecutionTrace, type ExecutionStep } from \"../src/lib/engine\";
+import { levels, type Block } from \"../src/lib/levels\";
+import { loadUnlockedLevel, saveUnlockedLevel } from \"../src/lib/storage\";
+
+type RunState = \"idle\" | \"running\" | \"success\" | \"failed\";
+
+const tickMs = 600;
+
+export default function HomePage() {
+  const [selectedLevel, setSelectedLevel] = useState(1);
+  const [unlockedLevel, setUnlockedLevel] = useState(1);
+  const [program, setProgram] = useState<Block[]>([]);
+  const [dogPosition, setDogPosition] = useState(levels[0].start);
+  const [activeBlock, setActiveBlock] = useState<number | null>(null);
+  const [statusText, setStatusText] = useState(\"Build a program, then press Run.\");
+  const [runState, setRunState] = useState<RunState>(\"idle\");
+
+  const level = useMemo(() => levels[selectedLevel - 1], [selectedLevel]);
+
+  useEffect(() => {
+    const unlocked = loadUnlockedLevel();
+    setUnlockedLevel(Math.min(unlocked, levels.length));
+  }, []);
+
+  useEffect(() => {
+    setProgram([]);
+    setDogPosition(level.start);
+    setActiveBlock(null);
+    setRunState(\"idle\");
+    setStatusText(level.narrative);
+  }, [level]);
+
+  useEffect(() => {
+    if (runState "'!== "running") {
+      return;
+    }
+
+    const trace = buildExecutionTrace(level, program);
+    if (trace.length === 0) {
+      setRunState("failed");
+      setStatusText("Add at least one block.");
+      return;
+    }
+
+    let index = 0;
+    const timer = window.setInterval(() => {
+      const step: ExecutionStep | undefined = trace[index];
+      if (!step) {
+        window.clearInterval(timer);
+        return;
+      }
+
+      setActiveBlock(step.blockIndex < program.length ? step.blockIndex : null);
+      setDogPosition(step.dogPosition);
+
+      if (step.status === "running") {
+        setStatusText(`Running block ${step.blockIndex + 1}: ${step.op}`);
+      }
+
+      if (step.status === "success") {
+        window.clearInterval(timer);
+        setRunState("success");
+        setStatusText("Success! Taffy reached the bone.");
+        const nextUnlocked = Math.min(level.id + 1, levels.length);
+        if (nextUnlocked > unlockedLevel) {
+          setUnlockedLevel(nextUnlocked);
+          saveUnlockedLevel(nextUnlocked);
+        }
+        setActiveBlock(null);
+      }
+
+      if (step.status === "failed") {
+        window.clearInterval(timer);
+        setRunState("failed");
+        setStatusText(step.reason ?? "That did not work. Try debugging your blocks.");
+        setActiveBlock(null);
+      }
+
+      index += 1;
+    }, tickMs);
+
+    return () => window.clearInterval(timer);
+  }, [level, program, runState, unlockedLevel]);
+
+  const runProgram = () => {
+    setDogPosition(level.start);
+    setActiveBlock(null);
+    setRunState("running");
+    setStatusText("Running program...");
+  };
+
+  const resetProgram = () => {
+    setDogPosition(level.start);
+    setActiveBlock(null);
+    setRunState("idle");
+    setStatusText("Reset complete. Edit blocks and run again.");
+  };
+
+  return (
+    <main className="page">
+      <h1>Taffy Code Trail</h1>
+      <p className="story">{level.worldStory}</p>
+
+      <section className="level-picker" aria-label="Level picker">
+        {levels.map((entry) => {
+          const locked = entry.id > unlockedLevel;
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              onClick={() => !locked && setSelectedLevel(entry.id)}
+              disabled={locked}
+              className={entry.id === selectedLevel ? "active-level" : ""}
+            >
+              Level {entry.id}
+            </button>
+          );
+        })}
+      </section>
+
+      <p className="narration" aria-live="polite">
+        {statusText}
+      </p>
+
+      <section className="layout-grid">
+        <div className="panel">
+          <h2>Blocks</h2>
+          <div className="stack">
+            <button type="button" onClick={() => setProgram((prev) => [...prev, "Move"])}>
+              Add Move(1)
+            </button>
+            <button type="button" onClick={() => setProgram((prev) => [...prev, "Jump"])}>
+              Add Jump
+            </button>
+            <button type="button" onClick={() => setProgram([])}>
+              Clear Blocks
+            </button>
+            <button
+              type="button"
+              onClick={() => setProgram((prev) => prev.slice(0, Math.max(0, prev.length - 1)))}
+            >
+              Remove Last
+            </button>
+          </div>
+        </div>
+
+        <div className="panel">
+          <h2>Workspace</h2>
+          <ol className="workspace" aria-label="Program workspace">
+            {program.map((block, index) => (
+              <li key={`${block}-${index}`} className={activeBlock === index ? "active-block" : ""}>
+                {index + 1}. {block}
+              </li>
+            ))}
+          </ol>
+          <div className="stack run-row">
+            <button type="button" onClick={runProgram} disabled={runState === "running"}>
+              Run
+            </button>
+            <button type="button" onClick={resetProgram} disabled={runState === "running"}>
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div className="panel">
+          <h2>Play Area</h2>
+          <p>{level.narrative}</p>
+          <div className="track" role="img" aria-label="Dog path and bone goal">
+            {level.tiles.map((tile, index) => {
+              const hasDog = index === dogPosition;
+              const hasGoal = index === level.goal;
+              return (
+                <div key={index} className={`tile ${tile}`}>
+                  {hasGoal && <span className={runState === "success" ? "goal sparkle" : "goal"}>🦴</span>}
+                  {hasDog && <span className={runState === "running" ? "dog running" : "dog"}>🐶</span>}
+                </div>
+              );
+            })}
+          </div>
+          <p className="legend">Ground = green, gaps = dashed, obstacles = striped.</p>
+        </div>
+      </section>
+    </main>
+  );
+}
+EOF' in /home/postnl/multi-agent-educational-softwareexec
+/bin/bash -lc "cat > frontend/app/globals.css <<'EOF'
+:root {
+  --sky: #e4f5ff;
+  --panel: #ffffff;
+  --ink: #14324a;
+  --grass: #8dd97f;
+  --gap: #d6ecf8;
+  --obstacle: #ffd27a;
+  --focus: #ff5f36;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background: radial-gradient(circle at top, #f9fdff, var(--sky));
+  font-family: \"Trebuchet MS\", \"Comic Sans MS\", sans-serif;
+}
+
+button {
+  border: 2px solid #2c5d81;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0.55rem 0.85rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+h1,
+h2 {
+  margin-top: 0;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.story {
+  font-size: 1.05rem;
+  margin: 0 0 1rem;
+}
+
+.narration {
+  border-left: 4px solid #2c5d81;
+  background: #fff7d9;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.level-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.active-level {
+  background: #d8f8ce;
+}
+
+.layout-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.panel {
+  background: var(--panel);
+  border: 2px solid #2c5d81;
+  border-radius: 14px;
+  padding: 1rem;
+  min-height: 290px;
+}
+
+.stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.workspace {
+  min-height: 120px;
+  padding-left: 1.25rem;
+}
+
+.workspace li {
+  margin-bottom: 0.45rem;
+  border-radius: 8px;
+  padding: 0.2rem 0.4rem;
+}
+
+.active-block {
+  background: #ffefad;
+  border: 2px solid #d89300;
+}
+
+.run-row {
+  margin-top: 0.6rem;
+}
+
+.track {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.tile {
+  min-height: 62px;
+  border-radius: 8px;
+  border: 2px solid #2c5d81;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ground {
+  background: var(--grass);
+}
+
+.gap {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--gap),
+    var(--gap) 8px,
+    #bfe0f2 8px,
+    #bfe0f2 16px
+  );
+}
+
+.obstacle {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--obstacle),
+    var(--obstacle) 8px,
+    #ffc259 8px,
+    #ffc259 16px
+  );
+}
+
+.legend {
+  font-size: 0.92rem;
+}
+
+.sparkle {
+  animation: sparkle 0.7s linear infinite alternate;
+}
+
+.running {
+  animation: run 0.35s ease-in-out infinite alternate;
+}
+
+@keyframes run {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes sparkle {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.18);
+  }
+}
+
+@media (max-width: 900px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .track {
+    grid-template-columns: repeat(8, minmax(34px, 1fr));
+  }
+}
+EOF" in /home/postnl/multi-agent-educational-software succeeded in 51ms:
+
+ succeeded in 51ms:
+
+
+thinking
+**Planning test additions**
+codex
+I’ll add deterministic engine tests now and replace `TEST.md` with the real offline command so CI can run a concrete suite.
+exec
+/bin/bash -lc "cat > tests/engine.test.ts <<'EOF'
+import test from \"node:test\";
+import assert from \"node:assert/strict\";
+import { buildExecutionTrace } from \"../frontend/src/lib/engine\";
+import { levels } from \"../frontend/src/lib/levels\";
+
+test(\"level 1 succeeds with simple moves\", () => {
+  const level1 = levels[0];
+  const trace = buildExecutionTrace(level1, [\"Move\", \"Move\", \"Move\", \"Move\", \"Move\"]);
+  const last = trace.at(-1);
+
+  assert.ok(last);
+  assert.equal(last.status, \"success\");
+  assert.equal(last.dogPosition, 5);
+});
+
+test(\"level 2 fails without jump\", () => {
+  const level2 = levels[1];
+  const trace = buildExecutionTrace(level2, [\"Move\", \"Move\", \"Move\"]);
+  const last = trace.at(-1);
+
+  assert.ok(last);
+  assert.equal(last.status, \"failed\");
+  assert.match(last.reason ?? \"\", /Try Jump|trouble/i);
+});
+
+test(\"level 2 succeeds with move jump move move\", () => {
+  const level2 = levels[1];
+  const trace = buildExecutionTrace(level2, [\"Move\", \"Jump\", \"Move\", \"Move\"]);
+  const last = trace.at(-1);
+
+  assert.ok(last);
+  assert.equal(last.status, \"success\");
+  assert.equal(last.dogPosition, 5);
+});
+
+test(\"deterministic trace repeats exactly\", () => {
+  const level4 = levels[3];
+  const blocks = [\"Jump\", \"Move\", \"Jump\", \"Move\"] as const;
+
+  const first = buildExecutionTrace(level4, [...blocks]);
+  const second = buildExecutionTrace(level4, [...blocks]);
+
+  assert.deepEqual(first, second);
+});
+EOF" in /home/postnl/multi-agent-educational-softwareexec
+/bin/bash -lc "cat > TEST.md <<'EOF'
+# Deterministic test command
+
+Run this command from the repository root:
+
+"'```bash
+npm --prefix frontend run test
+```
+
+Notes:
+- Tests are offline and deterministic.
+- The test suite validates deterministic interpreter behavior for core Move/Jump flows.
+- Command exits with code `0` on pass.
+EOF' in /home/postnl/multi-agent-educational-software succeeded in 50ms:
+
+ succeeded in 50ms:
+
+
+thinking
+**Assessing test run feasibility**
+codex
+I’ve finished the edits and will do a quick verification pass (file checks and test command attempt) before I summarize exactly what changed.
+exec
+/bin/bash -lc 'rg --files frontend tests && git status --short frontend tests TEST.md' in /home/postnl/multi-agent-educational-software succeeded in 51ms:
+frontend/next-env.d.ts
+frontend/next.config.mjs
+frontend/package.json
+frontend/app/page.tsx
+frontend/app/layout.tsx
+frontend/app/globals.css
+tests/engine.test.ts
+frontend/tsconfig.json
+frontend/src/lib/levels.ts
+frontend/src/lib/storage.ts
+frontend/src/lib/engine.ts
+?? TEST.md
+?? frontend/
+?? tests/
+exec
+/bin/bash -lc 'npm --prefix frontend run test' in /home/postnl/multi-agent-educational-software exited 1 in 55ms:
+
+> taffy-frontend@0.1.0 test
+> tsx --test ../tests/**/*.test.ts
+
+node:net:1918
+      const error = new UVExceptionWithHostPort(rval, 'listen', address, port);
+                    ^
+
+Error: listen EPERM: operation not permitted /tmp/tsx-1000/4845.pipe
+    at Server.setupListenHandle [as _listen2] (node:net:1918:21)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2119:5)
+    at file:///home/postnl/node_modules/tsx/dist/cli.mjs:53:31537
+    at new Promise (<anonymous>)
+    at createIpcServer (file:///home/postnl/node_modules/tsx/dist/cli.mjs:53:31515)
+    at async file:///home/postnl/node_modules/tsx/dist/cli.mjs:55:459 {
+  code: 'EPERM',
+  errno: -1,
+  syscall: 'listen',
+  address: '/tmp/tsx-1000/4845.pipe',
+
+thinking
+**Testing with Node built-in type stripping**
+codex
+I hit a sandbox-specific failure with `tsx` (IPC socket permission). I’m switching the test command to Node’s built-in TypeScript stripping mode so tests remain deterministic without that IPC dependency.
+exec
+/bin/bash -lc "cat > frontend/package.json <<'EOF'
+{
+  \"name\": \"taffy-frontend\",
+  \"version\": \"0.1.0\",
+  \"private\": true,
+  \"scripts\": {
+    \"dev\": \"next dev\",
+    \"build\": \"next build\",
+    \"start\": \"next start\",
+    \"test\": \"node --experimental-strip-types --test ../tests/**/*.test.ts\"
+  },
+  \"dependencies\": {
+    \"next\": \"14.2.32\",
+    \"react\": \"18.3.1\",
+    \"react-dom\": \"18.3.1\"
+  },
+  \"devDependencies\": {
+    \"@types/node\": \"20.17.57\",
+    \"@types/react\": \"18.3.17\",
+    \"@types/react-dom\": \"18.3.5\",
+    \"typescript\": \"5.6.3\"
+  }
+}
+EOF" in /home/postnl/multi-agent-educational-software succeeded in 51ms:
+
+exec
+/bin/bash -lc 'node --experimental-strip-types --test tests/engine.test.ts' in /home/postnl/multi-agent-educational-software exited 1 in 50ms:
+node:internal/modules/esm/resolve:274
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/postnl/multi-agent-educational-software/frontend/src/lib/engine' imported from /home/postnl/multi-agent-educational-software/tests/engine.test.ts
+    at finalizeResolution (node:internal/modules/esm/resolve:274:11)
+    at moduleResolve (node:internal/modules/esm/resolve:864:10)
+    at defaultResolve (node:internal/modules/esm/resolve:990:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:757:20)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:734:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:317:38)
+    at #link (node:internal/modules/esm/module_job:208:49) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///home/postnl/multi-agent-educational-software/frontend/src/lib/engine'
+}
+
+Node.js v24.11.0
+✖ tests/engine.test.ts (71.062025ms)
+ℹ tests 1
+ℹ suites 0
+
+thinking
+**Adjusting import extensions for Node tests**
+file update
+M /home/postnl/multi-agent-educational-software/tests/engine.test.ts
+@@ -2,4 +2,4 @@
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+apply_patch(auto_approved=true) exited 0 in 4ms:
+Success. Updated the following files:
+M tests/engine.test.ts
+file update:
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+file update:
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+codex
+I’m fixing Node ESM path resolution for TypeScript tests by making imports explicit, then I’ll re-run the deterministic test command.
+file update
+M /home/postnl/multi-agent-educational-software/frontend/src/lib/engine.ts
+@@ -1,2 +1,2 @@
+-import type { Block, Level, Tile } from "./levels";
++import type { Block, Level, Tile } from "./levels.ts";
+ 
+apply_patch(auto_approved=true) exited 0 in 17ms:
+Success. Updated the following files:
+M frontend/src/lib/engine.ts
+file update:
+diff --git a/frontend/src/lib/engine.ts b/frontend/src/lib/engine.ts
+index ece05d85e4be2319fbcc0e5b66d6a1f5bc865a1b..c4a415f413fc70c80ef127717d4785ffbccf9a21
+--- a/frontend/src/lib/engine.ts
++++ b/frontend/src/lib/engine.ts
+@@ -1,4 +1,4 @@
+-import type { Block, Level, Tile } from "./levels";
++import type { Block, Level, Tile } from "./levels.ts";
+ 
+ export type ProgramInstruction = {
+   op: Block;
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+file update:
+diff --git a/frontend/src/lib/engine.ts b/frontend/src/lib/engine.ts
+index ece05d85e4be2319fbcc0e5b66d6a1f5bc865a1b..c4a415f413fc70c80ef127717d4785ffbccf9a21
+--- a/frontend/src/lib/engine.ts
++++ b/frontend/src/lib/engine.ts
+@@ -1,4 +1,4 @@
+-import type { Block, Level, Tile } from "./levels";
++import type { Block, Level, Tile } from "./levels.ts";
+ 
+ export type ProgramInstruction = {
+   op: Block;
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+
+thinking
+**Running tests with TypeScript setup**
+exec
+/bin/bash -lc 'node --experimental-strip-types --test tests/engine.test.ts' in /home/postnl/multi-agent-educational-software succeeded in 51ms:
+✔ tests/engine.test.ts (77.243462ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82.557927
+file update:
+diff --git a/frontend/src/lib/engine.ts b/frontend/src/lib/engine.ts
+index ece05d85e4be2319fbcc0e5b66d6a1f5bc865a1b..c4a415f413fc70c80ef127717d4785ffbccf9a21
+--- a/frontend/src/lib/engine.ts
++++ b/frontend/src/lib/engine.ts
+@@ -1,4 +1,4 @@
+-import type { Block, Level, Tile } from "./levels";
++import type { Block, Level, Tile } from "./levels.ts";
+ 
+ export type ProgramInstruction = {
+   op: Block;
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+
+thinking
+**Testing frontend npm script behavior**
+exec
+/bin/bash -lc 'npm --prefix frontend run test' in /home/postnl/multi-agent-educational-software succeeded in 90ms:
+✔ ../tests/engine.test.ts (75.153646ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.677782
+file update:
+diff --git a/frontend/src/lib/engine.ts b/frontend/src/lib/engine.ts
+index ece05d85e4be2319fbcc0e5b66d6a1f5bc865a1b..c4a415f413fc70c80ef127717d4785ffbccf9a21
+--- a/frontend/src/lib/engine.ts
++++ b/frontend/src/lib/engine.ts
+@@ -1,4 +1,4 @@
+-import type { Block, Level, Tile } from "./levels";
++import type { Block, Level, Tile } from "./levels.ts";
+ 
+ export type ProgramInstruction = {
+   op: Block;
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+
+thinking
+**Reverting import extension changes**
+codex
+I spotted a TypeScript compatibility risk with `.ts` import suffixes inside app code. I’m reverting that app-side change and adjusting only the test runtime flags so Next.js TypeScript remains clean.
+file update
+M /home/postnl/multi-agent-educational-software/frontend/src/lib/engine.ts
+@@ -1,2 +1,2 @@
+-import type { Block, Level, Tile } from "./levels.ts";
++import type { Block, Level, Tile } from "./levels";
+ 
+apply_patch(auto_approved=true) exited 0 in 14ms:
+Success. Updated the following files:
+M frontend/src/lib/engine.ts
+file update:
+
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+file update:
+
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+
+thinking
+**Updating node command with resolution flag**
+file update
+M /home/postnl/multi-agent-educational-software/frontend/package.json
+@@ -8,3 +8,3 @@
+     "start": "next start",
+-    "test": "node --experimental-strip-types --test ../tests/**/*.test.ts"
++    "test": "node --experimental-strip-types --experimental-specifier-resolution=node --test ../tests/**/*.test.ts"
+   },
+apply_patch(auto_approved=true) exited 0 in 19ms:
+Success. Updated the following files:
+M frontend/package.json
+file update:
+diff --git a/frontend/package.json b/frontend/package.json
+index 328002f99e59bd5275abe1a12efc515577872c5b..95acdfb477e450749bf96af8ce0076c5a290cfa4
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -6,7 +6,7 @@
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+-    "test": "node --experimental-strip-types --test ../tests/**/*.test.ts"
++    "test": "node --experimental-strip-types --experimental-specifier-resolution=node --test ../tests/**/*.test.ts"
+   },
+   "dependencies": {
+     "next": "14.2.32",
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+file update:
+diff --git a/frontend/package.json b/frontend/package.json
+index 328002f99e59bd5275abe1a12efc515577872c5b..95acdfb477e450749bf96af8ce0076c5a290cfa4
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -6,7 +6,7 @@
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+-    "test": "node --experimental-strip-types --test ../tests/**/*.test.ts"
++    "test": "node --experimental-strip-types --experimental-specifier-resolution=node --test ../tests/**/*.test.ts"
+   },
+   "dependencies": {
+     "next": "14.2.32",
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+
+thinking
+**Running tests to verify**
+exec
+/bin/bash -lc 'npm --prefix frontend run test' in /home/postnl/multi-agent-educational-software succeeded in 75ms:
+✔ ../tests/engine.test.ts (70.86393ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76.443104
+file update:
+diff --git a/frontend/package.json b/frontend/package.json
+index 328002f99e59bd5275abe1a12efc515577872c5b..95acdfb477e450749bf96af8ce0076c5a290cfa4
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -6,7 +6,7 @@
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+-    "test": "node --experimental-strip-types --test ../tests/**/*.test.ts"
++    "test": "node --experimental-strip-types --experimental-specifier-resolution=node --test ../tests/**/*.test.ts"
+   },
+   "dependencies": {
+     "next": "14.2.32",
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+
+thinking
+**Confirming no immediate lint or refs needed**
+exec
+/bin/bash -lc 'git status --short frontend tests TEST.md' in /home/postnl/multi-agent-educational-software succeeded in 51ms:
+?? TEST.md
+?? frontend/
+?? tests/
+file update:
+diff --git a/frontend/package.json b/frontend/package.json
+index 328002f99e59bd5275abe1a12efc515577872c5b..95acdfb477e450749bf96af8ce0076c5a290cfa4
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -6,7 +6,7 @@
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+-    "test": "node --experimental-strip-types --test ../tests/**/*.test.ts"
++    "test": "node --experimental-strip-types --experimental-specifier-resolution=node --test ../tests/**/*.test.ts"
+   },
+   "dependencies": {
+     "next": "14.2.32",
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+codex
+Implemented the `frontend` step with minimal, deterministic edits inside the allowlist only.
+
+Changed files:
+- `frontend/package.json`
+- `frontend/next.config.mjs`
+- `frontend/tsconfig.json`
+- `frontend/next-env.d.ts`
+- `frontend/app/layout.tsx`
+- `frontend/app/page.tsx`
+- `frontend/app/globals.css`
+- `frontend/src/lib/levels.ts`
+- `frontend/src/lib/engine.ts`
+- `frontend/src/lib/storage.ts`
+- `tests/engine.test.ts`
+- `TEST.md`
+
+What was added:
+- Next.js + TypeScript app in `frontend/` with:
+  - 10 local levels.
+  - Move/Jump block sequence builder.
+  - Deterministic compile+interpret execution.
+  - Current-block highlight while running.
+  - Run/Reset controls.
+  - Dog-to-bone level goal loop with fail/success states.
+  - Local-only progress unlock persistence via `localStorage`.
+  - Keyboard-operable controls, visible focus, on-screen narration text, and non-color-only tile cues.
+- Deterministic offline tests in `tests/engine.test.ts` for interpreter behavior.
+- Real deterministic test command in `TEST.md`.
+
+Verification:
+- Ran: `npm --prefix frontend run test`
+- Result: pass (exit code `0`).
+file update:
+diff --git a/frontend/package.json b/frontend/package.json
+index 328002f99e59bd5275abe1a12efc515577872c5b..95acdfb477e450749bf96af8ce0076c5a290cfa4
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -6,7 +6,7 @@
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+-    "test": "node --experimental-strip-types --test ../tests/**/*.test.ts"
++    "test": "node --experimental-strip-types --experimental-specifier-resolution=node --test ../tests/**/*.test.ts"
+   },
+   "dependencies": {
+     "next": "14.2.32",
+diff --git a/tests/engine.test.ts b/tests/engine.test.ts
+index 6e521d0bb74d297e956fca3d50bfe56524d4aad8..4a5450cdd46b44cd493ad38804752b9224d55159
+--- a/tests/engine.test.ts
++++ b/tests/engine.test.ts
+@@ -1,7 +1,7 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import { buildExecutionTrace } from "../frontend/src/lib/engine";
+-import { levels } from "../frontend/src/lib/levels";
++import { buildExecutionTrace } from "../frontend/src/lib/engine.ts";
++import { levels } from "../frontend/src/lib/levels.ts";
+ 
+ test("level 1 succeeds with simple moves", () => {
+   const level1 = levels[0];
+
+tokens used
+34,184

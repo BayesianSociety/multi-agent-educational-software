@@ -1,0 +1,12 @@
+{
+  "error": null,
+  "ok": true,
+  "results": [
+    {
+      "command": "npm --prefix frontend run test",
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "\n> taffy-frontend@0.1.0 test\n> node --experimental-strip-types --experimental-specifier-resolution=node --test ../tests/**/*.test.ts\n\n\u2714 ../tests/backend.levels.test.ts (90.100934ms)\n\u2714 ../tests/backend.server.test.ts (110.302592ms)\n\u2714 ../tests/engine.test.ts (86.157683ms)\n\u2139 tests 3\n\u2139 suites 0\n\u2139 pass 3\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 118.89465\n"
+    }
+  ]
+}

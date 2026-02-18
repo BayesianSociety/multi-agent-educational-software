@@ -1,0 +1,16 @@
+{
+  "id": 6,
+  "slug": "beach-arrival",
+  "world": "Beach",
+  "narrative": "Now at the beach, Taffy follows paw prints in the sand.",
+  "tutorialFocus": "Longer sequence",
+  "grid": {
+    "length": 12,
+    "start": 0,
+    "goal": 10,
+    "gaps": [5],
+    "obstacles": []
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Move", "Move", "Jump", "Move", "Move", "Move", "Move"]
+}

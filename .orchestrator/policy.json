@@ -1,0 +1,177 @@
+{
+  "bootstrap_min_trials_per_variant": 3,
+  "commit_window_runs": 10,
+  "constraint_patches": {
+    "release_engineer": "- Previous deterministic failure code: CODEX_EXIT_NONZERO. Avoid triggering it."
+  },
+  "elim_max_failure_rate": 0.9,
+  "elim_min_mean_clean": 0.1,
+  "elim_min_trials": 6,
+  "selection_strategy": "ucb1",
+  "stats": {
+    "backend::01cb2ce7c5a437f635a16be4b4fd4a8bba58a1717bc8764b999fda72b55b83ca": {
+      "attempts": {
+        "embedded/backend/v1": 1,
+        "embedded/backend/v2": 0
+      },
+      "clean_passes": {
+        "embedded/backend/v1": 1,
+        "embedded/backend/v2": 0
+      },
+      "commit": {
+        "active": false,
+        "best": null,
+        "consecutive_not_clean_best": 0,
+        "remaining": 0
+      },
+      "eliminated": [],
+      "last_rr_index": 0,
+      "passes": {
+        "embedded/backend/v1": 1,
+        "embedded/backend/v2": 0
+      },
+      "selection_strategy": null
+    },
+    "designer::0de455fc5eda756856a90975734a4b507181f9c7dff5931de21e10f26898f9b5": {
+      "attempts": {
+        "embedded/designer/v1": 1,
+        "embedded/designer/v2": 0
+      },
+      "clean_passes": {
+        "embedded/designer/v1": 1,
+        "embedded/designer/v2": 0
+      },
+      "commit": {
+        "active": false,
+        "best": null,
+        "consecutive_not_clean_best": 0,
+        "remaining": 0
+      },
+      "eliminated": [],
+      "last_rr_index": 0,
+      "passes": {
+        "embedded/designer/v1": 1,
+        "embedded/designer/v2": 0
+      },
+      "selection_strategy": null
+    },
+    "docs::5a4685e06b6e39b1d5766f46679191c2dd1285fa5ec5101ed8b71c93ee12e79e": {
+      "attempts": {
+        "embedded/docs/v1": 1,
+        "embedded/docs/v2": 0
+      },
+      "clean_passes": {
+        "embedded/docs/v1": 1,
+        "embedded/docs/v2": 0
+      },
+      "commit": {
+        "active": false,
+        "best": null,
+        "consecutive_not_clean_best": 0,
+        "remaining": 0
+      },
+      "eliminated": [],
+      "last_rr_index": 0,
+      "passes": {
+        "embedded/docs/v1": 1,
+        "embedded/docs/v2": 0
+      },
+      "selection_strategy": null
+    },
+    "frontend::3176b462cdfbf318fcb57e899c2aee4e48e01c203b8e7e4b07cdede14f5fd409": {
+      "attempts": {
+        "embedded/frontend/v1": 1,
+        "embedded/frontend/v2": 0
+      },
+      "clean_passes": {
+        "embedded/frontend/v1": 1,
+        "embedded/frontend/v2": 0
+      },
+      "commit": {
+        "active": false,
+        "best": null,
+        "consecutive_not_clean_best": 0,
+        "remaining": 0
+      },
+      "eliminated": [],
+      "last_rr_index": 0,
+      "passes": {
+        "embedded/frontend/v1": 1,
+        "embedded/frontend/v2": 0
+      },
+      "selection_strategy": null
+    },
+    "qa::ae20432e618dc6bb09dd0669c11d1e977408489c430d8b3701ab73d3330ed2ed": {
+      "attempts": {
+        "embedded/qa/v1": 1,
+        "embedded/qa/v2": 0
+      },
+      "clean_passes": {
+        "embedded/qa/v1": 1,
+        "embedded/qa/v2": 0
+      },
+      "commit": {
+        "active": false,
+        "best": null,
+        "consecutive_not_clean_best": 0,
+        "remaining": 0
+      },
+      "eliminated": [],
+      "last_rr_index": 0,
+      "passes": {
+        "embedded/qa/v1": 1,
+        "embedded/qa/v2": 0
+      },
+      "selection_strategy": null
+    },
+    "release_engineer::08eaab579db1dc61ce1d2cb301a12ea9ded25c86038f4a621d641b9d47733d67": {
+      "attempts": {
+        "embedded/release_engineer/v1": 9,
+        "embedded/release_engineer/v2": 7
+      },
+      "clean_passes": {
+        "embedded/release_engineer/v1": 1,
+        "embedded/release_engineer/v2": 0
+      },
+      "commit": {
+        "active": false,
+        "best": null,
+        "consecutive_not_clean_best": 0,
+        "remaining": 0
+      },
+      "eliminated": [],
+      "last_rr_index": 1,
+      "passes": {
+        "embedded/release_engineer/v1": 1,
+        "embedded/release_engineer/v2": 0
+      },
+      "selection_strategy": "ucb1"
+    },
+    "requirements::92ce2cca91672f0a0de85ecb8bfdfb7489e473cdc28451264f0685fd31830051": {
+      "attempts": {
+        "embedded/requirements/v1": 1,
+        "embedded/requirements/v2": 0
+      },
+      "clean_passes": {
+        "embedded/requirements/v1": 1,
+        "embedded/requirements/v2": 0
+      },
+      "commit": {
+        "active": false,
+        "best": null,
+        "consecutive_not_clean_best": 0,
+        "remaining": 0
+      },
+      "eliminated": [],
+      "last_rr_index": 0,
+      "passes": {
+        "embedded/requirements/v1": 1,
+        "embedded/requirements/v2": 0
+      },
+      "selection_strategy": null
+    }
+  },
+  "step_limits_overrides": {},
+  "ucb_c": 1.0,
+  "version": 1
+}

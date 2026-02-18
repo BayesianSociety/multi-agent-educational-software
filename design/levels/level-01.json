@@ -1,0 +1,16 @@
+{
+  "id": 1,
+  "slug": "taffy-first-steps",
+  "world": "Park",
+  "narrative": "Taffy really wants that bone!",
+  "tutorialFocus": "Move",
+  "grid": {
+    "length": 8,
+    "start": 0,
+    "goal": 6,
+    "gaps": [],
+    "obstacles": []
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Move", "Move", "Move", "Move"]
+}

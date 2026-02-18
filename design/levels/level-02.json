@@ -1,0 +1,16 @@
+{
+  "id": 2,
+  "slug": "first-jump",
+  "world": "Park",
+  "narrative": "A tiny gap appears. Taffy can jump it!",
+  "tutorialFocus": "Jump",
+  "grid": {
+    "length": 9,
+    "start": 0,
+    "goal": 7,
+    "gaps": [3],
+    "obstacles": []
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Jump", "Move", "Move", "Move"]
+}

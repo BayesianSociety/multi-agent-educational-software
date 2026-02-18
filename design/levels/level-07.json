@@ -1,0 +1,16 @@
+{
+  "id": 7,
+  "slug": "beach-driftwood",
+  "world": "Beach",
+  "narrative": "Driftwood and dips make this beach trail bouncy.",
+  "tutorialFocus": "Debugging",
+  "grid": {
+    "length": 13,
+    "start": 0,
+    "goal": 11,
+    "gaps": [4],
+    "obstacles": [8]
+  },
+  "allowedBlocks": ["Move", "Jump"],
+  "recommendedSolution": ["Move", "Move", "Move", "Jump", "Move", "Move", "Move", "Jump", "Move", "Move"]
+}

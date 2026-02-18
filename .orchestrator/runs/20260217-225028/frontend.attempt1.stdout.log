@@ -1,0 +1,32 @@
+Implemented the `frontend` step with minimal, deterministic edits inside the allowlist only.
+
+Changed files:
+- `frontend/package.json`
+- `frontend/next.config.mjs`
+- `frontend/tsconfig.json`
+- `frontend/next-env.d.ts`
+- `frontend/app/layout.tsx`
+- `frontend/app/page.tsx`
+- `frontend/app/globals.css`
+- `frontend/src/lib/levels.ts`
+- `frontend/src/lib/engine.ts`
+- `frontend/src/lib/storage.ts`
+- `tests/engine.test.ts`
+- `TEST.md`
+
+What was added:
+- Next.js + TypeScript app in `frontend/` with:
+  - 10 local levels.
+  - Move/Jump block sequence builder.
+  - Deterministic compile+interpret execution.
+  - Current-block highlight while running.
+  - Run/Reset controls.
+  - Dog-to-bone level goal loop with fail/success states.
+  - Local-only progress unlock persistence via `localStorage`.
+  - Keyboard-operable controls, visible focus, on-screen narration text, and non-color-only tile cues.
+- Deterministic offline tests in `tests/engine.test.ts` for interpreter behavior.
+- Real deterministic test command in `TEST.md`.
+
+Verification:
+- Ran: `npm --prefix frontend run test`
+- Result: pass (exit code `0`).

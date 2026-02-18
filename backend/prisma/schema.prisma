@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Level {
+  id                  Int      @id
+  slug                String   @unique
+  world               String
+  narrative           String
+  tutorialFocus       String
+  grid                Json
+  allowedBlocks       Json
+  recommendedSolution Json
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
