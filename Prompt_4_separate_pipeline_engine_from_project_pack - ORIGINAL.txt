@@ -46,15 +46,9 @@ If running Design B, ALL Design A requirements still apply unless explicitly ove
 - This workflow may reference optional Codex flags such as:
   - --experimental-json (JSONL event stream)
   - --output-schema (schema-constrained output)
-  - approval/config flags (for example: --ask-for-approval, --config)
 - The orchestrator MUST implement feature detection:
   - deterministically invoke `codex exec --help` and check for flag presence (string match)
   - if unsupported, proceed without them and record that they were unavailable
-- Unsupported flag usage MUST fail deterministically with code: CODEX_CLI_FLAG_UNSUPPORTED.
-- If optional flags are unsupported, orchestrator MUST fall back to the minimal compatible command:
-  - `codex exec --sandbox workspace-write -`
-- Transient transport failures (for example: "stream disconnected", "error sending request", "channel closed")
-  MUST trigger bounded retry in the same attempt (default: 2 retries with deterministic backoff) before failing the step.
 - Regardless of flag support, gating/learning MUST use filesystem + validators + exit codes only.
 
 ----------------------------------------------------------------------
@@ -73,8 +67,6 @@ Codex MUST create/update these exact paths (case-sensitive):
 - REQUIREMENTS.md
 - TEST.md
 - AGENT_TASKS.md
-- README.md
-- RUNBOOK.md
 - directories: /design, /frontend, /backend, /tests
 
 [Design B] Additional required outputs (Codex-authored)  [Layer N/A]
@@ -203,10 +195,8 @@ Suggested roles:
 ----------------------------------------------------------------------
 [Design A] Default pipeline order  [Layer-to-step mapping shown inline]
 0) Release Engineer (bootstrap repo structure and run instructions)  [Layer 0 + Layer 1 + minimal Layer 2: establish project brief; lock it]
-0.5) Planner (schema-constrained plan for roles, outputs, and dependencies)  [Layer N/A]
 1) Requirements Analyst  [Layer 1: translate brief into requirements + acceptance criteria]
 2) UX / Designer  [Layer 3: block UX + level/design assets; must conform to Layer 0–2 brief]
-2.5) Data Specialist (optional; scan/index/normalize data artifacts when project_type requires it)  [Layer 2]
 3) Frontend Dev  [Layer 2 implementation + Layer 3 UI mechanics; must conform to Layer 0–2 brief]
 4) Backend Dev  [Layer 2: ONLY if architecture constraints require it; otherwise keep minimal placeholder]
 5) QA Tester  [Layer 2: deterministic tests + test command wiring; validates Layer 1 acceptance criteria]
@@ -218,13 +208,11 @@ Suggested roles:
 
 Parallelization:
 - [Design A] Allowed ONLY if specialists write to provably disjoint allowlisted paths and enforcement remains deterministic.
-- For parallel runs, orchestrator MUST apply one combined policy+validator gate over the merged change set.
 - Default: sequential.
 
 ----------------------------------------------------------------------
 [Design A] Codex invocation protocol  [Layer N/A]
 - Launch `codex exec` as a subprocess.
-- Use writable Codex sessions by default (`--sandbox workspace-write`) for specialist steps.
 - Provide the prompt via stdin using '-' (read prompt from stdin).
 - Capture stdout + stderr.
 - If supported, `--experimental-json` MAY be enabled for diagnostics only.
@@ -238,17 +226,10 @@ Parallelization:
   - filesystem diffs (changed paths)
   - hashes/manifests
   - retry counts
-- Runtime visibility modes MUST be supported:
-  - `--quiet` (minimal output)
-  - `--verbose` (step-by-step internal status and gating logs)
-- Per-step file logging is required:
-  - write `/.orchestrator/runs/<run_id>/steps/<step_name>/attempt_<n>.json`
-  - include variant id, retry index, exit code, changed paths, validation codes, and rollback decision.
 
 [PROJECT LAYER INJECTION RULE (must be applied by orchestrator prompts)]  [Layer 0–2]
 - Every specialist prompt MUST include (verbatim or deterministically extracted):
   - the project brief (Layer 0–2) content OR a deterministic excerpt of it
-  - a read-only hashed manifest snapshot of relevant workspace inputs
   - explicit instruction: do not contradict the brief
 - If PROJECT_BRIEF.yaml is used, specialist prompts SHOULD also include its `project_type` value verbatim.
 - Gating MUST NOT rely on whether Codex “claimed” compliance; only validators/diffs.
@@ -271,11 +252,10 @@ Example minimal allowlists (adapt as needed):
   - [Modularity] plus: project brief config file (e.g., PROJECT_BRIEF.yaml) (ONLY in this step, then locked)
 - Requirements: REQUIREMENTS.md, AGENT_TASKS.md  [Layer 1]
 - Designer: /design/**, REQUIREMENTS.md (optional)  [Layer 3]
-- Data Specialist (optional): project-specific data/index outputs only (for example /plan/**)  [Layer 2]
-- Frontend: /frontend/**, /tests/**  [Layer 2 + Layer 3]
-- Backend: /backend/**, /tests/**, .env.example (optional), docker-compose.yml (optional)  [Layer 2]
+- Frontend: /frontend/**, /tests/**, TEST.md (optional)  [Layer 2 + Layer 3]
+- Backend: /backend/**, /tests/**, TEST.md (optional), .env.example (optional), docker-compose.yml (optional)  [Layer 2]
 - QA: /tests/**, TEST.md  [Layer 2]
-- Docs: README.md, RUNBOOK.md  [Layer 1/2]
+- Docs: REQUIREMENTS.md, TEST.md, AGENT_TASKS.md  [Layer 1/2]
 
 [Design A] Change limits (deterministic safety)  [Layer N/A]
 Default per-step caps:
@@ -329,9 +309,6 @@ TEST.md must contain:  [Layer 2]
 - "# How to run tests"
 - a fenced code block with at least ONE command
 - "# Environments"
-- TEST.md ownership rule:
-  - Only Release Engineer (bootstrap) and QA may modify TEST.md.
-  - Frontend, Backend, and Docs steps must not modify TEST.md.
 
 AGENT_TASKS.md must contain:  [Layer N/A but must reference project brief]
 - "# Agent Tasks"
@@ -345,13 +322,6 @@ AGENT_TASKS.md must contain:  [Layer N/A but must reference project brief]
 - "# How to Run Tests"
 - explicit rule: "Do not modify /.orchestrator/**"
 - After Release Engineer step completes, AGENTS.md becomes LOCKED.
-
-README.md and RUNBOOK.md validators:  [Layer 1/2]
-- README.md MUST include exact run instructions for frontend, backend, and tests.
-- RUNBOOK.md MUST include troubleshooting and deterministic recovery notes.
-- If backend_required is true in project brief/config:
-  - frontend/backend integration evidence MUST exist (for example frontend calls backend endpoint(s)).
-  - missing evidence is a deterministic validation failure code: BACKEND_UNUSED.
 
 Test command extraction (deterministic):  [Layer 2]
 [DEFAULT MODE — original behavior]
@@ -395,9 +365,6 @@ Variant source:
   - Python-owned files under /.orchestrator/prompt_templates/<agent>/**
   Codex must never modify /.orchestrator/**.
 - [Design B] If /prompts/<agent>/** exists, the orchestrator MUST load variants from /prompts/<agent>/** instead of internal templates.
-- Per-agent sub-prompts MUST be explicit:
-  - each specialist receives a role-specific sub-prompt variant for that step.
-  - selected variant id MUST be logged deterministically per attempt.
 
 Deterministic prompt epoching (prevents stale stats)
 - Compute prompt_epoch_id as a SHA-256 over the loaded variant contents:

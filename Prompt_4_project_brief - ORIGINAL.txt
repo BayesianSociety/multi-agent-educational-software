@@ -41,18 +41,15 @@
 
 # Layer 2 — Architecture constraints
 - **Backend REQUIRED** for MVP. The `/backend` directory MUST contain server logic.
-- **Frontend framework:** Next.js (TypeScript), using the latest stable major version available at generation time. The Next.js app MUST live in `/frontend`.
-- **Backend framework:** Node.js API (TypeScript) living in `/backend` (choose this path and follow it consistently).
-- **Database:** SQLite is the source of truth. Local development MUST use Docker Compose (repo-root `docker-compose.yml`).
+- **Frontend framework:** Next.js (TypeScript). The Next.js app MUST live in `/frontend`.
+- **Backend framework:** Node.js API (TypeScript) living in `/backend` (e.g., Express/Fastify) OR Next.js route handlers in `/frontend` (choose ONE and follow it consistently).
+- **Database:** SQLiteQL is the source of truth. Local development MUST use Docker Compose (repo-root `docker-compose.yml`).
 - **Data access / migrations:** Use Prisma (or explicitly choose another migration tool). If Prisma: include `/backend/prisma/schema.prisma` and migrations workflow.
 - **Level format:** JSON files under `/design/levels/` (one file per level) OR stored in SQLite (choose ONE; for MVP prefer JSON-on-disk unless you truly need DB-authored content).
 - **Execution model:** Compile blocks into a simple internal instruction list, then interpret step-by-step deterministically.
 - **Persistence:** Store user progress in SQLite ONLY if you have accounts. If no accounts, store progress locally (localStorage) and keep DB for content/admin only.
 - **Testing:** must run offline and deterministically. Provide a deterministic test command in `TEST.md` and ensure it exits with code 0. Tests MUST spin up SQLite locally (docker compose) or use a deterministic test DB container.
 - **Security:** No secrets committed. Provide `.env.example` and keep real secrets out of the repo.
-- **Frontend-backend integration:** Since backend is REQUIRED, frontend runtime flow MUST call backend API endpoint(s); backend must not be unused.
-- **Required backend endpoints (minimum):** `GET /health`, `GET /api/levels`, `GET /api/levels/:id`.
-- **Run documentation:** deliver exact startup commands for frontend, backend, tests, and optional docker compose usage in project docs.
 
 
 # Layer 3 — Content & UX specifics (may evolve iteratively under /design/**)
