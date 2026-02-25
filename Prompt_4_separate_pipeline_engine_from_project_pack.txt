@@ -188,8 +188,10 @@ Instead it MUST enforce “Codex run windows”:
 
 2) Specialists (each is one `codex exec` run)
 Suggested roles:
+- Planner
 - Requirements Analyst
 - UX / Designer
+- Data Specialist (optional)
 - Frontend Dev
 - Backend Dev
 - QA Tester
@@ -265,10 +267,11 @@ Global forbidden paths for Codex (hard-fail if touched):
 
 Each step must have a per-step allowlist.
 Example minimal allowlists (adapt as needed):
-- Release Engineer: REQUIREMENTS.md, TEST.md, AGENT_TASKS.md, docker-compose.yml, .env.example, .gitignore, /design/**, /frontend/**, /backend/**, /tests/**
+- Release Engineer: REQUIREMENTS.md, TEST.md, AGENT_TASKS.md, README.md, RUNBOOK.md, docker-compose.yml, .env.example, .gitignore
   - [Design B] plus: AGENTS.md (ONLY in this step)
   - [Layer 0–2] plus: project brief file (e.g., PROJECT_BRIEF.md) (ONLY in this step, then locked)
   - [Modularity] plus: project brief config file (e.g., PROJECT_BRIEF.yaml) (ONLY in this step, then locked)
+- Planner: .pipeline_plan.json, .pipeline_plan_schema.json (optional, if schema mode is used)  [Layer N/A]
 - Requirements: REQUIREMENTS.md, AGENT_TASKS.md  [Layer 1]
 - Designer: /design/**, REQUIREMENTS.md (optional)  [Layer 3]
 - Data Specialist (optional): project-specific data/index outputs only (for example /plan/**)  [Layer 2]
@@ -287,8 +290,15 @@ If caps exceeded: fail, revert, retry with a stricter constraint patch.
 ----------------------------------------------------------------------
 [Design A] Deterministic validators (minimum viable, explicit)  [Layer N/A baseline + layer-specific additions]
 Existence + structure:
-- Required files exist: REQUIREMENTS.md, TEST.md, AGENT_TASKS.md
+- Required files exist: REQUIREMENTS.md, TEST.md, AGENT_TASKS.md, README.md, RUNBOOK.md
 - Required directories exist: /design, /frontend, /backend, /tests
+- Planner validators:
+  - .pipeline_plan.json MUST exist after Planner step.
+  - .pipeline_plan.json MUST be valid JSON object and MUST include, at minimum:
+    - roles
+    - required_outputs
+    - dependencies
+  - If schema mode is enabled, .pipeline_plan_schema.json MUST exist and be used for plan validation.
 
 [Layer 2] Infrastructure file validators (if DB/backend is required by PROJECT_BRIEF.md or PROJECT_BRIEF.yaml)
 - If the project requires Docker Compose:
@@ -398,6 +408,9 @@ Variant source:
 - Per-agent sub-prompts MUST be explicit:
   - each specialist receives a role-specific sub-prompt variant for that step.
   - selected variant id MUST be logged deterministically per attempt.
+- Prompt mapping trace artifact is required per run:
+  - write `/.orchestrator/runs/<run_id>/prompt_map.json`
+  - include, for each step: agent role, variant id, variant source path/name, and prompt_epoch_id.
 
 Deterministic prompt epoching (prevents stale stats)
 - Compute prompt_epoch_id as a SHA-256 over the loaded variant contents:

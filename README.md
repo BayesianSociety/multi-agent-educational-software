@@ -98,7 +98,7 @@ cat Prompt_4_separate_pipeline_engine_from_project_pack.txt Prompt_4_project_bri
 - The orchestrator.py is the main file. Think about which parts from multi_agent_workflow_deterministic_ver3_finance.py, would make orchestrator.py an even better application creator.
 
 # currently, the generated app starts as two processes:
-## starting the application
+
   1. Backend API
 
   npm --prefix backend run start
